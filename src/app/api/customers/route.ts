@@ -76,48 +76,36 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) {
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
     }
 
-    const user = await db.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Get all customers for the current user
     const customers = await db.customer.findMany({
       where: {
-        userId: user.id,
+        userId: session.user.id,
       },
       orderBy: {
         createdAt: "desc",
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        city: true,
-        state: true,
-        createdAt: true,
-      },
     });
 
-    return NextResponse.json(customers);
+    return new NextResponse(JSON.stringify(customers));
   } catch (error) {
-    console.error("Error fetching customers:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch customers" },
-      { status: 500 }
-    );
+    console.error("Error getting customers:", error);
+    // Return more detailed error information
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    return new NextResponse(JSON.stringify({ 
+      error: "Failed to get customers", 
+      message: errorMessage,
+      stack: process.env.NODE_ENV === "development" ? errorStack : undefined 
+    }), { status: 500 });
   }
 }

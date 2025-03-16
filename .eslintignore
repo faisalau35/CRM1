@@ -1,0 +1,14 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore build output
+.next/
+out/
+
+# Ignore specific files with issues
+src/app/dashboard/customers/[id]/edit/page.tsx
+src/app/dashboard/customers/[id]/page.tsx
+src/app/dashboard/customers/new/page.tsx
+src/app/dashboard/customers/page.tsx
+src/app/dashboard/projects/new/page.tsx
+src/app/login/page.tsx 

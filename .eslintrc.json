@@ -6,6 +6,7 @@
     "react/no-unescaped-entities": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "@typescript-eslint/no-require-imports": "off",
-    "no-var": "off"
+    "no-var": "error",
+    "react/jsx-no-undef": "warn"
   }
 } 

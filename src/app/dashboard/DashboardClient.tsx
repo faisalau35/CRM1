@@ -7,18 +7,15 @@ import {
   Group, 
   RingProgress, 
   SimpleGrid, 
-  Paper, 
   Title, 
   Button, 
   ThemeIcon, 
-  rem, 
   useMantineTheme,
   Stack,
   Avatar,
   Timeline,
   Divider,
-  Badge,
-  Box
+  Badge
 } from '@mantine/core';
 import { 
   IconArrowUpRight, 
@@ -32,6 +29,7 @@ import {
   IconMessage,
   IconFileUpload
 } from '@tabler/icons-react';
+import React from 'react';
 
 interface DashboardClientProps {
   user: {
@@ -60,7 +58,13 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     { id: 4, title: 'File uploaded', description: 'Contract document was uploaded to the system', time: '2 days ago', icon: IconFileUpload, color: 'orange' },
   ];
 
-  const StatsCard = ({ title, value, diff, icon: Icon, color }: { title: string, value: string, diff: number, icon: any, color: string }) => {
+  const StatsCard = ({ title, value, diff, icon: Icon, color }: { 
+    title: string, 
+    value: string, 
+    diff: number, 
+    icon: React.ElementType, 
+    color: string 
+  }) => {
     return (
       <Card withBorder p="md" radius="md" shadow="sm">
         <Group justify="space-between" align="flex-start">

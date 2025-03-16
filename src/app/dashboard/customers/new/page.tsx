@@ -525,14 +525,39 @@ export default function NewCustomerPage() {
                         <div className="relative">
                           <Input
                             type="text"
+                            inputMode="numeric"
                             value={card.cardNumber}
-                            onChange={(e) => updateCreditCard(index, "cardNumber", e.target.value)}
+                            onChange={(e) => {
+                              // Direct update for immediate feedback
+                              const value = e.target.value;
+                              // Format the card number with spaces
+                              const digits = value.replace(/\D/g, '');
+                              const parts = [];
+                              for (let i = 0; i < digits.length; i += 4) {
+                                parts.push(digits.slice(i, i + 4));
+                              }
+                              const formattedValue = parts.join(' ');
+                              
+                              // Update the card immediately for responsive typing
+                              const updatedCards = [...creditCards];
+                              updatedCards[index] = { 
+                                ...updatedCards[index], 
+                                cardNumber: formattedValue,
+                              };
+                              setCreditCards(updatedCards);
+                              
+                              // Then trigger the BIN lookup if needed
+                              if (digits.length >= 6 && !updatedCards[index].bankName) {
+                                updateCreditCard(index, "cardNumber", formattedValue);
+                              }
+                            }}
                             disabled={isLoading}
                             maxLength={19} // 16 digits + 3 spaces
                             placeholder="XXXX XXXX XXXX XXXX"
-                            className={card.isValid === false ? "border-red-500" : ""}
+                            className={`${card.isValid === false ? "border-red-500" : ""} z-50`}
+                            style={{ position: 'relative', zIndex: 50 }}
                           />
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 pointer-events-none">
                             {card.scheme && (
                               <div className="h-6 w-10 flex items-center justify-center">
                                 {card.scheme === "visa" && <Icons.visa className="h-5 w-8" />}

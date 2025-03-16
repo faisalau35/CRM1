@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { Button, Input, Card, Text, Loader } from "@mantine/core";
 
+// Define interface for BIN lookup result
+interface BinLookupResult {
+  bank?: string;
+  scheme?: string;
+  type?: string;
+  category?: string;
+  country?: string;
+}
+
 export default function BinTestPage() {
   const [bin, setBin] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<BinLookupResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

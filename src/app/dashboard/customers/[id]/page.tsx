@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
@@ -11,12 +11,9 @@ import {
   Text,
   Button,
   Paper,
-  Divider,
   SimpleGrid,
-  Box,
   Table,
   ActionIcon,
-  Menu,
   Card,
   Avatar,
   Badge,
@@ -26,7 +23,7 @@ import {
   Loader,
   Modal,
   CopyButton,
-  rem,
+  Box,
 } from "@mantine/core";
 import {
   IconUser,
@@ -60,14 +57,16 @@ interface CreditCardBinInfo {
     phone?: string;
   };
   isLoading?: boolean;
+  lastUpdated?: string;
+  error?: string;
 }
 
 interface CreditCard {
   id: string;
   cardNumber: string;
   cardholderName: string;
-  expirationMonth: string;
-  expirationYear: string;
+  expiryMonth: string;
+  expiryYear: string;
   cvv: string;
   binInfo?: CreditCardBinInfo;
 }
@@ -126,6 +125,16 @@ export default function CustomerPage() {
         const data = await response.json();
         
         if (isMounted) {
+          // Ensure credit card data is properly formatted
+          if (data.creditCards?.length > 0) {
+            data.creditCards = data.creditCards.map((card: any) => ({
+              ...card,
+              // Make sure we're using the correct property names
+              expiryMonth: card.expiryMonth?.toString() || '',
+              expiryYear: card.expiryYear?.toString() || ''
+            }));
+          }
+          
           setCustomer(data);
           
           // After setting customer data, load BIN info if there are credit cards
@@ -185,6 +194,7 @@ export default function CustomerPage() {
     return cleaned;
   };
 
+  // Update the fetchAllBinInfo function to ensure it properly loads BIN information
   const fetchAllBinInfo = async (cards: CreditCard[]) => {
     if (!cards?.length) return;
     
@@ -207,11 +217,56 @@ export default function CustomerPage() {
           // Skip if bin is not valid
           if (bin.length < 6) continue;
           
-          // Use the API route directly
-          const response = await fetch(`/api/bin-lookup?bin=${bin}`);
+          // Show loading state
+          setCustomer(prevCustomer => {
+            if (!prevCustomer) return null;
+            
+            const updatedCreditCards = [...prevCustomer.creditCards];
+            updatedCreditCards[i] = {
+              ...updatedCreditCards[i],
+              binInfo: {
+                ...(updatedCreditCards[i].binInfo || {}),
+                isLoading: true
+              }
+            };
+            
+            return {
+              ...prevCustomer,
+              creditCards: updatedCreditCards
+            };
+          });
+          
+          // Use the API route directly with a timeout to prevent hanging
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+          
+          const response = await fetch(`/api/bin-lookup?bin=${bin}`, {
+            signal: controller.signal,
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          clearTimeout(timeoutId);
           
           if (!response.ok) {
-            throw new Error(`Failed to fetch BIN info for ${bin}`);
+            console.warn(`Failed to fetch BIN info for ${bin} - Status: ${response.status}`);
+            
+            // Set a simplified binInfo object with default values
+            updatedCards[i] = {
+              ...card,
+              binInfo: {
+                scheme: 'unknown',
+                type: 'unknown',
+                brand: 'Unknown',
+                country: { name: 'Unknown' },
+                bank: { name: 'Unknown' },
+                isLoading: false
+              }
+            };
+            
+            hasUpdates = true;
+            continue; // Skip to next card
           }
           
           const data = await response.json();
@@ -219,6 +274,9 @@ export default function CustomerPage() {
           // Update the card with BIN info
           updatedCards[i] = {
             ...card,
+            // Ensure expiry fields are preserved
+            expiryMonth: card.expiryMonth,
+            expiryYear: card.expiryYear,
             binInfo: {
               scheme: data.scheme?.toLowerCase(),
               type: data.type?.toLowerCase(),
@@ -239,6 +297,9 @@ export default function CustomerPage() {
           // Update the card to show error state
           updatedCards[i] = {
             ...card,
+            // Ensure expiry fields are preserved
+            expiryMonth: card.expiryMonth,
+            expiryYear: card.expiryYear,
             binInfo: {
               scheme: undefined,
               type: undefined,
@@ -281,33 +342,134 @@ export default function CustomerPage() {
     return String.fromCodePoint(...codePoints);
   };
 
-  // Refresh BIN info for all cards
+  // Update the refreshBinInfo function
   const refreshBinInfo = async () => {
     if (!customer?.creditCards?.length) return;
     
     setRefreshingBin(true);
     
     try {
-      // Mark all cards as loading
-      const cardsWithLoading = customer.creditCards.map(card => ({
-        ...card,
-        binInfo: card.binInfo ? { ...card.binInfo, isLoading: true } : { isLoading: true }
-      }));
+      // Create a copy of the credit cards
+      const cards = [...customer.creditCards];
       
-      // Update state with loading indicators
+      // Show loading state for all cards
       setCustomer(prevCustomer => {
         if (!prevCustomer) return null;
+        
+        const updatedCreditCards = prevCustomer.creditCards.map(card => ({
+          ...card,
+          binInfo: {
+            ...(card.binInfo || {}),
+            isLoading: true
+          }
+        }));
+        
         return {
           ...prevCustomer,
-          creditCards: cardsWithLoading
+          creditCards: updatedCreditCards
         };
       });
       
-      // Fetch new BIN info
-      await fetchAllBinInfo(cardsWithLoading);
+      // Process each card
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const bin = card.cardNumber.slice(0, 6);
+        
+        if (bin.length < 6) {
+          // Skip invalid BINs but update loading state
+          setCustomer(prevCustomer => {
+            if (!prevCustomer) return null;
+            
+            const updatedCreditCards = [...prevCustomer.creditCards];
+            updatedCreditCards[i] = {
+              ...updatedCreditCards[i],
+              binInfo: {
+                ...(updatedCreditCards[i].binInfo || {}),
+                isLoading: false
+              }
+            };
+            
+            return {
+              ...prevCustomer,
+              creditCards: updatedCreditCards
+            };
+          });
+          continue;
+        }
+        
+        try {
+          // Use the API route with cache busting
+          const timestamp = new Date().getTime();
+          const response = await fetch(`/api/bin-lookup?bin=${bin}&t=${timestamp}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch BIN info for ${bin}`);
+          }
+          
+          const data = await response.json();
+          
+          // Update the card with fresh BIN info
+          setCustomer(prevCustomer => {
+            if (!prevCustomer) return null;
+            
+            const updatedCreditCards = [...prevCustomer.creditCards];
+            updatedCreditCards[i] = {
+              ...updatedCreditCards[i],
+              binInfo: {
+                scheme: data.scheme?.toLowerCase(),
+                type: data.type?.toLowerCase(),
+                brand: data.category,
+                country: {
+                  name: data.country
+                },
+                bank: {
+                  name: data.bank
+                },
+                isLoading: false,
+                lastUpdated: new Date().toISOString()
+              }
+            };
+            
+            return {
+              ...prevCustomer,
+              creditCards: updatedCreditCards
+            };
+          });
+        } catch (error) {
+          console.error(`Error refreshing BIN info for card ${card.id}:`, error);
+          
+          // Update error state for this card
+          setCustomer(prevCustomer => {
+            if (!prevCustomer) return null;
+            
+            const updatedCreditCards = [...prevCustomer.creditCards];
+            updatedCreditCards[i] = {
+              ...updatedCreditCards[i],
+              binInfo: {
+                ...(updatedCreditCards[i].binInfo || {}),
+                isLoading: false,
+                error: "Failed to refresh BIN information"
+              }
+            };
+            
+            return {
+              ...prevCustomer,
+              creditCards: updatedCreditCards
+            };
+          });
+        }
+      }
+      
+      toast.success("BIN information refreshed successfully");
     } catch (error) {
-      console.error("Error refreshing BIN info:", error);
-      toast.error("Failed to refresh card information");
+      console.error("Error refreshing BIN information:", error);
+      toast.error("Failed to refresh BIN information");
     } finally {
       setRefreshingBin(false);
     }
@@ -602,16 +764,21 @@ export default function CustomerPage() {
               <IconCreditCard size="1.2rem" color="var(--mantine-color-blue-6)" />
               <Title order={4}>Credit Cards</Title>
             </Group>
-            <Button 
-              variant="light" 
-              size="xs" 
-              leftSection={<IconRefresh size="0.9rem" />}
-              onClick={refreshBinInfo} 
-              loading={refreshingBin}
-              disabled={!customer.creditCards || customer.creditCards.length === 0}
-            >
-              Refresh BIN Info
-            </Button>
+            <Group justify="flex-end" mb="md">
+              <Tooltip label="Refresh credit card BIN information from the API">
+                <Button
+                  variant="light"
+                  color="blue"
+                  leftSection={<IconRefresh size={16} />}
+                  onClick={refreshBinInfo}
+                  loading={refreshingBin}
+                  disabled={!customer?.creditCards?.length}
+                  size="sm"
+                >
+                  Refresh BIN Info
+                </Button>
+              </Tooltip>
+            </Group>
           </Group>
         </Card.Section>
         
@@ -656,7 +823,7 @@ export default function CustomerPage() {
                             <Text fw={500}>Expiration</Text>
                           </Table.Td>
                           <Table.Td>
-                            <Text>{card.expirationMonth}/{card.expirationYear}</Text>
+                            <Text>{card.expiryMonth}/{card.expiryYear}</Text>
                           </Table.Td>
                         </Table.Tr>
                         <Table.Tr>
@@ -673,83 +840,52 @@ export default function CustomerPage() {
                   
                   <div>
                     <Title order={5} mb="md">BIN Information</Title>
-                    <Table>
-                      <Table.Tbody>
-                        <Table.Tr>
-                          <Table.Td width="40%">
-                            <Text fw={500}>BIN</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text>{card.cardNumber.slice(0, 6)}</Text>
-                          </Table.Td>
-                        </Table.Tr>
-                        <Table.Tr>
-                          <Table.Td>
-                            <Text fw={500}>Scheme</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            {card.binInfo?.scheme ? (
-                              <Badge color={card.binInfo?.scheme === 'visa' ? 'blue' : card.binInfo?.scheme === 'mastercard' ? 'red' : 'gray'}>
-                                {card.binInfo.scheme.toUpperCase()}
-                              </Badge>
-                            ) : (
-                              "—"
-                            )}
-                          </Table.Td>
-                        </Table.Tr>
-                        <Table.Tr>
-                          <Table.Td>
-                            <Text fw={500}>Type</Text>
-                          </Table.Td>
-                          <Table.Td>
+                    {card.binInfo?.isLoading ? (
+                      <Flex align="center" gap="xs">
+                        <Loader size="xs" />
+                        <Text size="xs" c="dimmed">Loading BIN information...</Text>
+                      </Flex>
+                    ) : (
+                      <>
+                        <Group justify="space-between" mb="xs">
+                          <Text fw={500} size="sm">BIN Information</Text>
+                          {card.binInfo?.lastUpdated && (
+                            <Text size="xs" c="dimmed">
+                              Last updated: {new Date(card.binInfo.lastUpdated).toLocaleString()}
+                            </Text>
+                          )}
+                        </Group>
+                        <SimpleGrid cols={2} spacing="xs" mb="md">
+                          <div>
+                            <Text size="xs" c="dimmed">BIN</Text>
+                            <Text>{card.cardNumber.slice(0, 6) || "—"}</Text>
+                          </div>
+                          <div>
+                            <Text size="xs" c="dimmed">Scheme</Text>
+                            <Text tt="capitalize">{card.binInfo?.scheme || "—"}</Text>
+                          </div>
+                          <div>
+                            <Text size="xs" c="dimmed">Type</Text>
                             <Text tt="capitalize">{card.binInfo?.type || "—"}</Text>
-                          </Table.Td>
-                        </Table.Tr>
-                        <Table.Tr>
-                          <Table.Td>
-                            <Text fw={500}>Brand</Text>
-                          </Table.Td>
-                          <Table.Td>
+                          </div>
+                          <div>
+                            <Text size="xs" c="dimmed">Brand</Text>
                             <Text>{card.binInfo?.brand || "—"}</Text>
-                          </Table.Td>
-                        </Table.Tr>
-                        <Table.Tr>
-                          <Table.Td>
-                            <Text fw={500}>Country</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            {card.binInfo?.country ? (
-                              <Group gap="xs">
-                                <Text>{card.binInfo.country.emoji || ""}</Text>
-                                <Text>{card.binInfo.country.name || "—"}</Text>
-                              </Group>
-                            ) : (
-                              "—"
-                            )}
-                          </Table.Td>
-                        </Table.Tr>
-                        <Table.Tr>
-                          <Table.Td>
-                            <Text fw={500}>Bank</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            {card.binInfo?.bank ? (
-                              <div>
-                                <Text>{card.binInfo.bank.name || "—"}</Text>
-                                {card.binInfo.bank.city && (
-                                  <Text size="xs" c="dimmed">City: {card.binInfo.bank.city}</Text>
-                                )}
-                                {card.binInfo.bank.phone && (
-                                  <Text size="xs" c="dimmed">Phone: {card.binInfo.bank.phone}</Text>
-                                )}
-                              </div>
-                            ) : (
-                              "—"
-                            )}
-                          </Table.Td>
-                        </Table.Tr>
-                      </Table.Tbody>
-                    </Table>
+                          </div>
+                          <div>
+                            <Text size="xs" c="dimmed">Country</Text>
+                            <Text>{card.binInfo?.country?.name || "—"}</Text>
+                          </div>
+                          <div>
+                            <Text size="xs" c="dimmed">Bank</Text>
+                            <Text>{card.binInfo?.bank?.name || "—"}</Text>
+                          </div>
+                        </SimpleGrid>
+                        {card.binInfo?.error && (
+                          <Text c="red" size="xs">{card.binInfo.error}</Text>
+                        )}
+                      </>
+                    )}
                   </div>
                 </SimpleGrid>
               </Paper>

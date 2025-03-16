@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { type Prisma } from "@prisma/client";
 
-type CreditCardInput = {
+// Define interface for credit card data
+interface CreditCardData {
   id?: string;
   cardholderName: string;
   cardNumber: string;
@@ -12,11 +12,16 @@ type CreditCardInput = {
   expiryYear: number;
   cvv: string;
   isDefault?: boolean;
-};
+  bin?: string;
+  bankName?: string;
+  cardType?: string;
+  scheme?: string;
+  country?: string;
+}
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -32,7 +37,7 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const customerId = params.id;
+    const customerId = context.params.id;
     const json = await request.json();
     const { firstName, lastName, email, phone, address, city, state, zipCode, dateOfBirth, ssn, driverLicense, creditCards } = json;
 
@@ -78,8 +83,8 @@ export async function PATCH(
       
       // Get IDs of cards to keep
       const updatedCardIds = creditCards
-        .filter((card: any) => card.id)
-        .map((card: any) => card.id);
+        .filter((card: CreditCardData) => card.id)
+        .map((card: CreditCardData) => card.id);
       
       // Delete cards that are no longer in the list
       const cardsToDelete = existingCardIds.filter(id => !updatedCardIds.includes(id));
@@ -94,7 +99,7 @@ export async function PATCH(
       }
       
       // Update or create cards
-      await Promise.all(creditCards.map(async (card: any) => {
+      await Promise.all(creditCards.map(async (card: CreditCardData) => {
         if (card.id) {
           // Update existing card
           await db.creditCard.update({
@@ -179,20 +184,19 @@ export async function PATCH(
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    // Ensure params.id is available
-    const id = params.id;
+    // Get the id from the URL path
+    const id = request.nextUrl.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
+    }
     
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const customer = await db.customer.findUnique({
@@ -206,25 +210,25 @@ export async function GET(
     });
 
     if (!customer) {
-      return new NextResponse(JSON.stringify({ error: "Customer not found" }), {
-        status: 404,
-      });
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
     return NextResponse.json(customer);
   } catch (error) {
     console.error("Error fetching customer:", error);
-    return new NextResponse(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-    });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
+    // Get the id from the URL path
+    const id = request.nextUrl.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
+    }
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -238,12 +242,10 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const customerId = params.id;
-
     // Check if customer exists and belongs to the user
     const existingCustomer = await db.customer.findFirst({
       where: {
-        id: customerId,
+        id,
         userId: user.id,
       },
     });
@@ -255,14 +257,14 @@ export async function DELETE(
     // Delete all credit cards associated with the customer
     await db.creditCard.deleteMany({
       where: {
-        customerId,
+        customerId: id,
       },
     });
 
     // Delete the customer
     await db.customer.delete({
       where: {
-        id: customerId,
+        id,
       },
     });
 

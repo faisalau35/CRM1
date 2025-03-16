@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Icons } from "@/components/icons";
-import { lookupCardDetails, validateCardNumber, CardDetails } from "@/lib/binLookup";
+import { lookupCardDetails, CardDetails } from "@/lib/binLookup";
 import { use } from "react";
 
 interface CreditCard {
@@ -415,7 +415,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="driverLicense">Driver's License</Label>
+                <Label htmlFor="driverLicense">Driver&apos;s License</Label>
                 <Input
                   id="driverLicense"
                   name="driverLicense"
