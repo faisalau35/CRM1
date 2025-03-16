@@ -193,13 +193,13 @@ export default function CustomersPage() {
   const filteredCustomers = customers.filter(customer => {
     const searchTerm = searchQuery.toLowerCase();
     return (
-      customer.firstName.toLowerCase().includes(searchTerm) ||
-      customer.lastName.toLowerCase().includes(searchTerm) ||
-      customer.email.toLowerCase().includes(searchTerm) ||
-      customer.phone.toLowerCase().includes(searchTerm) ||
-      (customer.city && customer.city.toLowerCase().includes(searchTerm)) ||
-      (customer.state && customer.state.toLowerCase().includes(searchTerm)) ||
-      (customer.status && customer.status.toLowerCase().includes(searchTerm))
+      (customer.firstName?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.lastName?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.email?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.phone?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.city?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.state?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.status?.toLowerCase() || '').includes(searchTerm)
     );
   });
 
