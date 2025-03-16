@@ -61,6 +61,7 @@ interface Customer {
   ssn?: string;
   driverLicense?: string;
   notes?: string;
+  ipAddress?: string;
   status: 'IN_PROGRESS' | 'ENGAGED' | 'DEAD';
   createdAt: string;
   creditCards?: CreditCard[];
@@ -1142,6 +1143,7 @@ export default function CustomersPage() {
                 <Table.Th>Customer</Table.Th>
                 <Table.Th>Contact</Table.Th>
                 <Table.Th>Location</Table.Th>
+                <Table.Th>IP Address</Table.Th>
                 <Table.Th>Status</Table.Th>
                 <Table.Th>Created</Table.Th>
                 <Table.Th style={{ width: 80 }}>Actions</Table.Th>
@@ -1150,7 +1152,7 @@ export default function CustomersPage() {
             <Table.Tbody>
               {paginatedCustomers.length === 0 ? (
                 <Table.Tr>
-                  <Table.Td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <Table.Td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>
                     <Box py="xl">
                       <ThemeIcon size={40} radius="xl" color="gray" variant="light" mx="auto" mb="md">
                         <IconUsers size={20} />
@@ -1214,6 +1216,9 @@ export default function CustomersPage() {
                       ) : (
                         "—"
                       )}
+                    </Table.Td>
+                    <Table.Td>
+                      {customer.ipAddress || "—"}
                     </Table.Td>
                     <Table.Td>
                       <Badge 

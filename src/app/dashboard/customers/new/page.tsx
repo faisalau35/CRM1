@@ -307,6 +307,7 @@ export default function NewCustomerPage() {
         dateOfBirth: formData.get("dateOfBirth"),
         driverLicense: formData.get("driverLicense"),
         notes: formData.get("notes"),
+        ipAddress: formData.get("ipAddress"),
         // Include credit cards
         creditCards: creditCards.filter(card => 
           card.cardholderName.trim() !== "" && 
@@ -535,6 +536,15 @@ export default function NewCustomerPage() {
                     disabled={isLoading}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ipAddress">IP Address</Label>
+                <Input
+                  id="ipAddress"
+                  name="ipAddress"
+                  placeholder="xxx.xxx.xxx.xxx"
+                  disabled={isLoading}
+                />
               </div>
             </div>
 

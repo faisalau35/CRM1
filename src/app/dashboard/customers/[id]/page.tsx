@@ -91,6 +91,7 @@ interface Customer {
   dateOfBirth: string;
   driverLicense?: string;
   notes?: string;
+  ipAddress?: string;
   creditCards: CreditCard[];
   createdAt: string;
   updatedAt: string;
@@ -852,6 +853,20 @@ export default function CustomerPage() {
                   <CopyableText value={customer.zipCode}>
                     <Text>{customer.zipCode}</Text>
                   </CopyableText>
+                </Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>
+                  <Text fw={500}>IP Address</Text>
+                </Table.Td>
+                <Table.Td>
+                  {customer.ipAddress ? (
+                    <CopyableText value={customer.ipAddress}>
+                      <Text>{customer.ipAddress}</Text>
+                    </CopyableText>
+                  ) : (
+                    <Text c="dimmed">Not provided</Text>
+                  )}
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>

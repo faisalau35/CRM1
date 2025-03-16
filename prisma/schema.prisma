@@ -37,6 +37,7 @@ model Customer {
   notes          String?
   secondaryEmail String?
   secondaryPhone String?
+  ipAddress      String?
   status         CustomerStatus @default(IN_PROGRESS)
   creditCards    CreditCard[]
   createdBy      User           @relation(fields: [userId], references: [id])

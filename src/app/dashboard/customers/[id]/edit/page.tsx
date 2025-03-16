@@ -43,6 +43,7 @@ interface Customer {
   ssn: string | null;
   driverLicense: string | null;
   notes?: string | null;
+  ipAddress?: string | null;
   creditCards: CreditCard[];
 }
 
@@ -302,6 +303,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         ssn: ssn,
         driverLicense: formData.get("driverLicense"),
         notes: formData.get("notes"),
+        ipAddress: formData.get("ipAddress"),
         creditCards: creditCards.map((card, index) => ({
           ...card,
           isDefault: index === 0,
@@ -508,6 +510,16 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                     disabled={isLoading}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ipAddress">IP Address</Label>
+                <Input
+                  id="ipAddress"
+                  name="ipAddress"
+                  defaultValue={customer.ipAddress || ""}
+                  placeholder="xxx.xxx.xxx.xxx"
+                  disabled={isLoading}
+                />
               </div>
             </div>
 

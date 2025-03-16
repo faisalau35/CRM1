@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       ssn, 
       driverLicense,
       notes,
+      ipAddress,
       creditCards
     } = json;
 
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
         ssn: ssn || null,
         driverLicense: driverLicense || null,
         notes: notes || null,
+        ipAddress: ipAddress || null,
         status: "IN_PROGRESS",
         userId: user.id,
       },
