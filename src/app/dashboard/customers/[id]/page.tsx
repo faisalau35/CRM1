@@ -76,7 +76,9 @@ interface Customer {
   firstName: string;
   lastName: string;
   email: string;
+  secondaryEmail?: string;
   phone: string;
+  secondaryPhone?: string;
   address: string;
   city: string;
   state: string;
@@ -84,6 +86,7 @@ interface Customer {
   ssn: string;
   dateOfBirth: string;
   driverLicense?: string;
+  notes?: string;
   creditCards: CreditCard[];
   createdAt: string;
   updatedAt: string;
@@ -530,6 +533,20 @@ export default function CustomerPage() {
     }
   };
 
+  // Add a function to format date of birth consistently as MM/DD/YY
+  const formatDateOfBirth = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const year = date.getFullYear().toString().slice(-2);
+      return `${month}/${day}/${year}`;
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateString;
+    }
+  };
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="70vh" direction="column" gap="md">
@@ -640,6 +657,25 @@ export default function CustomerPage() {
                 <Table.Td>
                   <Group gap="xs">
                     <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
+                      <IconMail size="0.8rem" />
+                    </ThemeIcon>
+                    <Text fw={500}>Secondary Email</Text>
+                  </Group>
+                </Table.Td>
+                <Table.Td>
+                  {customer.secondaryEmail ? (
+                    <CopyableText value={customer.secondaryEmail}>
+                      <Text>{customer.secondaryEmail}</Text>
+                    </CopyableText>
+                  ) : (
+                    <Text c="dimmed">Not provided</Text>
+                  )}
+                </Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>
+                  <Group gap="xs">
+                    <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
                       <IconPhone size="0.8rem" />
                     </ThemeIcon>
                     <Text fw={500}>Phone</Text>
@@ -649,6 +685,25 @@ export default function CustomerPage() {
                   <CopyableText value={customer.phone}>
                     <Text>{formatPhoneNumber(customer.phone)}</Text>
                   </CopyableText>
+                </Table.Td>
+              </Table.Tr>
+              <Table.Tr>
+                <Table.Td>
+                  <Group gap="xs">
+                    <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
+                      <IconPhone size="0.8rem" />
+                    </ThemeIcon>
+                    <Text fw={500}>Secondary Phone</Text>
+                  </Group>
+                </Table.Td>
+                <Table.Td>
+                  {customer.secondaryPhone ? (
+                    <CopyableText value={customer.secondaryPhone}>
+                      <Text>{formatPhoneNumber(customer.secondaryPhone)}</Text>
+                    </CopyableText>
+                  ) : (
+                    <Text c="dimmed">Not provided</Text>
+                  )}
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -676,8 +731,8 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <CopyableText value={new Date(customer.dateOfBirth).toLocaleDateString()}>
-                    <Text>{new Date(customer.dateOfBirth).toLocaleDateString()}</Text>
+                  <CopyableText value={formatDateOfBirth(customer.dateOfBirth)}>
+                    <Text>{formatDateOfBirth(customer.dateOfBirth)}</Text>
                   </CopyableText>
                 </Table.Td>
               </Table.Tr>
@@ -777,6 +832,24 @@ export default function CustomerPage() {
           </Table>
         </Card>
       </SimpleGrid>
+
+      {/* Customer Notes */}
+      <Card shadow="sm" radius="md" withBorder mb="xl">
+        <Card.Section withBorder inheritPadding py="xs" mb="md">
+          <Group>
+            <IconUser size="1.2rem" color="var(--mantine-color-blue-6)" />
+            <Title order={4}>Customer Notes</Title>
+          </Group>
+        </Card.Section>
+        
+        <Box p="md">
+          {customer.notes ? (
+            <Text>{customer.notes}</Text>
+          ) : (
+            <Text c="dimmed">No notes available for this customer.</Text>
+          )}
+        </Box>
+      </Card>
 
       {/* Credit Card Information */}
       <Card shadow="sm" radius="md" withBorder mb="xl">

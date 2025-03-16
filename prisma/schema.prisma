@@ -23,7 +23,9 @@ model Customer {
   firstName         String
   lastName          String
   email             String?
+  secondaryEmail    String?
   phone             String?
+  secondaryPhone    String?
   address           String?
   city              String?
   state             String?
@@ -31,6 +33,7 @@ model Customer {
   dateOfBirth       DateTime?
   ssn               String?
   driverLicense     String?
+  notes             String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   createdBy         User      @relation(fields: [userId], references: [id])

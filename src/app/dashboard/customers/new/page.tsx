@@ -100,6 +100,9 @@ export default function NewCustomerPage() {
     isValid: undefined,
   }]);
   const [refreshingBin, setRefreshingBin] = useState(false);
+  const [secondaryEmail, setSecondaryEmail] = useState("");
+  const [secondaryPhone, setSecondaryPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Clear any saved credit card data when component mounts
   useEffect(() => {
@@ -277,15 +280,33 @@ export default function NewCustomerPage() {
         firstName: formData.get("firstName"),
         lastName: formData.get("lastName"),
         email: formData.get("email"),
+        secondaryEmail: formData.get("secondaryEmail"),
         phone: formData.get("phone"),
+        secondaryPhone: formData.get("secondaryPhone"),
         address: formData.get("address"),
         city: formData.get("city"),
         state: formData.get("state"),
         zipCode: formData.get("zipCode"),
         ssn: formData.get("ssn"),
         dateOfBirth: formData.get("dateOfBirth"),
-        driverLicense: formData.get("driverLicense")
-        // No credit cards
+        driverLicense: formData.get("driverLicense"),
+        notes: formData.get("notes"),
+        // Include credit cards
+        creditCards: creditCards.filter(card => 
+          card.cardholderName.trim() !== "" && 
+          card.cardNumber.replace(/\s/g, "").length > 0
+        ).map(card => ({
+          cardholderName: card.cardholderName,
+          cardNumber: card.cardNumber.replace(/\s/g, ""), // Remove spaces
+          expiryMonth: parseInt(card.expiryMonth) || 0,
+          expiryYear: parseInt(card.expiryYear) || 0,
+          cvv: card.cvv,
+          bankName: card.bankName,
+          cardType: card.cardType,
+          scheme: card.scheme,
+          country: card.country,
+          bin: card.bin
+        }))
       };
       
       console.log("Sending customer data:", JSON.stringify(customerData));
@@ -388,11 +409,33 @@ export default function NewCustomerPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="secondaryEmail">Secondary Email (Optional)</Label>
+                <Input
+                  id="secondaryEmail"
+                  name="secondaryEmail"
+                  type="email"
+                  value={secondaryEmail}
+                  onChange={(e) => setSecondaryEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   name="phone"
                   type="tel"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondaryPhone">Secondary Phone (Optional)</Label>
+                <Input
+                  id="secondaryPhone"
+                  name="secondaryPhone"
+                  type="tel"
+                  value={secondaryPhone}
+                  onChange={(e) => setSecondaryPhone(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
@@ -424,6 +467,18 @@ export default function NewCustomerPage() {
                   id="driverLicense"
                   name="driverLicense"
                   disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Customer Notes (Optional)</Label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  disabled={isLoading}
+                  placeholder="Add notes about this customer..."
                 />
               </div>
             </div>

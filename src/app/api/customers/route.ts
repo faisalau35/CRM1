@@ -24,7 +24,23 @@ export async function POST(request: Request) {
       ssn: json.ssn ? "***-**-****" : null
     }, null, 2));
     
-    const { firstName, lastName, email, phone, address, city, state, zipCode, dateOfBirth, ssn, driverLicense } = json;
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      secondaryEmail, 
+      phone, 
+      secondaryPhone, 
+      address, 
+      city, 
+      state, 
+      zipCode, 
+      dateOfBirth, 
+      ssn, 
+      driverLicense,
+      notes,
+      creditCards
+    } = json;
 
     // Validate required fields
     if (!firstName || !lastName) {
@@ -38,7 +54,9 @@ export async function POST(request: Request) {
         firstName,
         lastName,
         email: email || null,
+        secondaryEmail: secondaryEmail || null,
         phone: phone || null,
+        secondaryPhone: secondaryPhone || null,
         address: address || null,
         city: city || null,
         state: state || null,
@@ -46,6 +64,7 @@ export async function POST(request: Request) {
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         ssn: ssn || null,
         driverLicense: driverLicense || null,
+        notes: notes || null,
         userId: user.id,
       },
     });

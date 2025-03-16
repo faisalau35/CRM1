@@ -39,7 +39,23 @@ export async function PATCH(
 
     const customerId = context.params.id;
     const json = await request.json();
-    const { firstName, lastName, email, phone, address, city, state, zipCode, dateOfBirth, ssn, driverLicense, creditCards } = json;
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      secondaryEmail, 
+      phone, 
+      secondaryPhone, 
+      address, 
+      city, 
+      state, 
+      zipCode, 
+      dateOfBirth, 
+      ssn, 
+      driverLicense,
+      notes,
+      creditCards 
+    } = json;
 
     // Check if customer exists and belongs to the user
     const existingCustomer = await db.customer.findFirst({
@@ -57,22 +73,25 @@ export async function PATCH(
     }
 
     // Update the customer
-    const customer = await db.customer.update({
+    const updatedCustomer = await db.customer.update({
       where: {
         id: customerId,
       },
       data: {
         firstName,
         lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        ssn,
-        driverLicense,
+        email: email || null,
+        secondaryEmail: secondaryEmail || null,
+        phone: phone || null,
+        secondaryPhone: secondaryPhone || null,
+        address: address || null,
+        city: city || null,
+        state: state || null,
+        zipCode: zipCode || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        ssn: ssn || null,
+        driverLicense: driverLicense || null,
+        notes: notes || null,
       },
     });
 
@@ -125,7 +144,7 @@ export async function PATCH(
               expiryYear: card.expiryYear,
               cvv: card.cvv,
               isDefault: card.isDefault || false,
-              customerId: customer.id,
+              customerId: updatedCustomer.id,
             },
           });
         }
@@ -154,7 +173,7 @@ export async function PATCH(
     }
 
     // Fetch updated customer with credit cards
-    const updatedCustomer = await db.customer.findUnique({
+    const updatedCustomerWithCards = await db.customer.findUnique({
       where: {
         id: customerId,
       },
@@ -165,9 +184,9 @@ export async function PATCH(
 
     // Sanitize sensitive data before returning
     const sanitizedCustomer = {
-      ...updatedCustomer,
-      ssn: updatedCustomer?.ssn,
-      creditCards: updatedCustomer?.creditCards.map(card => ({
+      ...updatedCustomerWithCards,
+      ssn: updatedCustomerWithCards?.ssn,
+      creditCards: updatedCustomerWithCards?.creditCards.map(card => ({
         ...card,
         cardNumber: card.cardNumber,
         cvv: card.cvv,

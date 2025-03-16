@@ -32,7 +32,9 @@ interface Customer {
   firstName: string;
   lastName: string;
   email: string | null;
+  secondaryEmail?: string | null;
   phone: string | null;
+  secondaryPhone?: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -40,6 +42,7 @@ interface Customer {
   dateOfBirth: string | null;
   ssn: string | null;
   driverLicense: string | null;
+  notes?: string | null;
   creditCards: CreditCard[];
 }
 
@@ -92,6 +95,9 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [ssn, setSsn] = useState("");
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [secondaryEmail, setSecondaryEmail] = useState<string>("");
+  const [secondaryPhone, setSecondaryPhone] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
 
   // Fetch customer data
   useEffect(() => {
@@ -152,6 +158,10 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
             isValid: undefined
           }]);
         }
+        
+        if (data.secondaryEmail) setSecondaryEmail(data.secondaryEmail);
+        if (data.secondaryPhone) setSecondaryPhone(data.secondaryPhone);
+        if (data.notes) setNotes(data.notes);
         
         setIsLoading(false);
       } catch (error) {
@@ -281,7 +291,9 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         firstName: formData.get("firstName"),
         lastName: formData.get("lastName"),
         email: formData.get("email"),
+        secondaryEmail: formData.get("secondaryEmail"),
         phone: formData.get("phone"),
+        secondaryPhone: formData.get("secondaryPhone"),
         address: formData.get("address"),
         city: formData.get("city"),
         state: formData.get("state"),
@@ -289,6 +301,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         dateOfBirth: formData.get("dateOfBirth"),
         ssn: ssn,
         driverLicense: formData.get("driverLicense"),
+        notes: formData.get("notes"),
         creditCards: creditCards.map((card, index) => ({
           ...card,
           isDefault: index === 0,
@@ -382,12 +395,32 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="secondaryEmail">Secondary Email</Label>
+                <Input
+                  id="secondaryEmail"
+                  type="email"
+                  value={secondaryEmail}
+                  onChange={(e) => setSecondaryEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   name="phone"
                   type="tel"
                   defaultValue={customer.phone || ""}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondaryPhone">Secondary Phone</Label>
+                <Input
+                  id="secondaryPhone"
+                  type="tel"
+                  value={secondaryPhone}
+                  onChange={(e) => setSecondaryPhone(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
@@ -421,6 +454,17 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                   name="driverLicense"
                   defaultValue={customer.driverLicense || ""}
                   disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Customer Notes</Label>
+                <textarea
+                  id="notes"
+                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  disabled={isLoading}
+                  placeholder="Add notes about this customer..."
                 />
               </div>
             </div>
