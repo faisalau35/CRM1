@@ -38,6 +38,9 @@ import {
   IconSun,
   IconBrandGithub,
 } from "@tabler/icons-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 interface NavItem {
   title: string;
@@ -76,12 +79,21 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const theme = useMantineTheme();
+  const mantineTheme = useMantineTheme();
   const [opened, { toggle }] = useDisclosure();
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" });
   };
+
+  const isDark = mounted && theme === "dark";
 
   return (
     <AppShell
@@ -92,12 +104,12 @@ export default function DashboardLayout({
         collapsed: { mobile: !opened },
       }}
       padding="md"
-      bg="gray.0"
+      bg={isDark ? "#050505" : "gray.0"}
     >
       <AppShell.Header 
         style={{ 
-          borderBottom: `1px solid ${theme.colors.gray[2]}`,
-          backgroundColor: theme.white,
+          borderBottom: `1px solid ${isDark ? "#1A1A1A" : mantineTheme.colors.gray[2]}`,
+          backgroundColor: isDark ? "#0A0A0A" : mantineTheme.white,
         }}
       >
         <Group h="100%" px="md" justify="space-between">
@@ -158,9 +170,7 @@ export default function DashboardLayout({
             </Tooltip>
             
             <Tooltip label="Toggle theme" position="bottom">
-              <ActionIcon variant="subtle" size="lg">
-                <IconSun size="1.2rem" stroke={1.5} />
-              </ActionIcon>
+              <ThemeToggle />
             </Tooltip>
 
             <Menu
@@ -226,8 +236,8 @@ export default function DashboardLayout({
       <AppShell.Navbar 
         p="md" 
         style={{ 
-          borderRight: `1px solid ${theme.colors.gray[2]}`,
-          backgroundColor: theme.white,
+          borderRight: `1px solid ${isDark ? "#1A1A1A" : mantineTheme.colors.gray[2]}`,
+          backgroundColor: isDark ? "#0A0A0A" : mantineTheme.white,
         }}
       >
         <AppShell.Section grow>
@@ -255,7 +265,7 @@ export default function DashboardLayout({
                 variant={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "filled" : "light"}
                 mb={8}
                 style={{
-                  borderRadius: theme.radius.md,
+                  borderRadius: mantineTheme.radius.md,
                 }}
               />
             ))}
@@ -269,8 +279,8 @@ export default function DashboardLayout({
             radius="md" 
             withBorder 
             style={{ 
-              backgroundColor: theme.colors.blue[0], 
-              borderColor: theme.colors.blue[2],
+              backgroundColor: isDark ? "#101010" : mantineTheme.colors.blue[0], 
+              borderColor: isDark ? "#1A1A1A" : mantineTheme.colors.blue[2],
             }}
           >
             <Text size="sm" fw={500} mb="xs">Need help?</Text>

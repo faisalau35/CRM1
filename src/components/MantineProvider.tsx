@@ -1,9 +1,10 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { MantineProvider as BaseMantineProvider, createTheme, MantineColorsTuple } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { SessionProvider } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
@@ -48,9 +49,16 @@ const theme = createTheme({
 });
 
 export function MantineProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme();
+  const [forcedColorScheme, setForcedColorScheme] = useState<'light' | 'dark' | undefined>(undefined);
+  
+  useEffect(() => {
+    setForcedColorScheme(resolvedTheme === 'dark' ? 'dark' : 'light');
+  }, [resolvedTheme]);
+
   return (
     <SessionProvider>
-      <BaseMantineProvider theme={theme} defaultColorScheme="light">
+      <BaseMantineProvider theme={theme} forceColorScheme={forcedColorScheme}>
         <Notifications position="top-right" />
         {children}
       </BaseMantineProvider>

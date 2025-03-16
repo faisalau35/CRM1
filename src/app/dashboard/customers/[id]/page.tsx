@@ -25,6 +25,7 @@ import {
   CopyButton,
   Box,
   Textarea,
+  useMantineColorScheme,
 } from "@mantine/core";
 import {
   IconUser,
@@ -125,6 +126,8 @@ export default function CustomerPage() {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
 
   // Fetch customer data
   useEffect(() => {
@@ -606,7 +609,7 @@ export default function CustomerPage() {
   return (
     <Container size="xl" py="md">
       {/* Header with actions */}
-      <Card shadow="sm" radius="md" withBorder mb="xl">
+      <Card shadow="sm" radius="md" withBorder mb="xl" bg={isDark ? "#1A1A1A" : undefined}>
         <Group justify="space-between" mb="md">
           <Group>
             <Avatar 
@@ -656,7 +659,7 @@ export default function CustomerPage() {
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="xl">
         {/* Personal Information */}
-        <Card shadow="sm" radius="md" withBorder>
+        <Card shadow="sm" radius="md" withBorder bg={isDark ? "#1A1A1A" : undefined}>
           <Card.Section withBorder inheritPadding py="xs" mb="md">
             <Group>
               <IconUser size="1.2rem" color="var(--mantine-color-blue-6)" />
@@ -801,7 +804,7 @@ export default function CustomerPage() {
         </Card>
         
         {/* Address Information */}
-        <Card shadow="sm" radius="md" withBorder>
+        <Card shadow="sm" radius="md" withBorder bg={isDark ? "#1A1A1A" : undefined}>
           <Card.Section withBorder inheritPadding py="xs" mb="md">
             <Group>
               <IconMapPin size="1.2rem" color="var(--mantine-color-blue-6)" />
@@ -877,9 +880,9 @@ export default function CustomerPage() {
       </SimpleGrid>
 
       {/* Customer Notes */}
-      <Card shadow="sm" radius="md" withBorder mb="xl">
+      <Card shadow="sm" radius="md" withBorder mb="xl" bg={isDark ? "#1A1A1A" : undefined}>
         <Card.Section withBorder inheritPadding py="xs" mb="md">
-          <Group justify="space-between">
+          <Group justify="apart">
             <Group>
               <IconUser size="1.2rem" color="var(--mantine-color-blue-6)" />
               <Title order={4}>Customer Notes</Title>
@@ -937,28 +940,22 @@ export default function CustomerPage() {
       </Card>
 
       {/* Credit Card Information */}
-      <Card shadow="sm" radius="md" withBorder mb="xl">
+      <Card shadow="sm" radius="md" withBorder mb="xl" bg={isDark ? "#1A1A1A" : undefined}>
         <Card.Section withBorder inheritPadding py="xs" mb="md">
-          <Group justify="space-between">
+          <Group justify="apart">
             <Group>
               <IconCreditCard size="1.2rem" color="var(--mantine-color-blue-6)" />
               <Title order={4}>Credit Cards</Title>
             </Group>
-            <Group justify="flex-end" mb="md">
-              <Tooltip label="Refresh credit card BIN information from the API">
-                <Button
-                  variant="light"
-                  color="blue"
-                  leftSection={<IconRefresh size={16} />}
-                  onClick={refreshBinInfo}
-                  loading={refreshingBin}
-                  disabled={!customer?.creditCards?.length}
-                  size="sm"
-                >
-                  Refresh BIN Info
-                </Button>
-              </Tooltip>
-            </Group>
+            <Button 
+              variant="light" 
+              size="xs"
+              leftSection={<IconRefresh size={14} />}
+              onClick={refreshBinInfo}
+              loading={refreshingBin}
+            >
+              Refresh BIN Info
+            </Button>
           </Group>
         </Card.Section>
         
@@ -1107,7 +1104,7 @@ export default function CustomerPage() {
       <Modal 
         opened={deleteModalOpen} 
         onClose={() => setDeleteModalOpen(false)}
-        title={<Text fw={600}>Delete Customer</Text>}
+        title="Delete Customer"
         centered
       >
         <Text size="sm" mb="lg">
