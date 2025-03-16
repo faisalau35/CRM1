@@ -28,8 +28,6 @@ const nextConfig = {
     domains: ['localhost'],
     // Add any other domains you need to serve images from
   },
-  // Optimize production builds
-  swcMinify: true,
   // Configure headers for security
   async headers() {
     return [
