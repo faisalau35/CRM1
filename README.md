@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Internal CRM System
+
+A modern CRM system built with Next.js, Prisma, PostgreSQL, and Shadcn UI components.
+
+## Features
+
+- User authentication with NextAuth.js
+- Customer management
+- Project tracking
+- Task management
+- Modern and responsive UI
+- Role-based access control
+- Real-time updates
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 19, Tailwind CSS, Shadcn UI
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: PostgreSQL
+- **Authentication**: NextAuth.js
+- **Styling**: Tailwind CSS, Shadcn UI Components
+- **State Management**: React Query
+- **Form Handling**: React Hook Form
+- **Validation**: Zod
+- **Deployment**: Vercel (recommended)
+
+## Prerequisites
+
+- Node.js 18.17 or later
+- PostgreSQL 12 or later
+- npm or yarn
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd crm-system
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Update the `.env` file with your database and authentication credentials.
+
+4. Set up the database:
+   ```bash
+   npx prisma migrate dev
+   ```
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/crm_db"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database Schema
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The system uses the following main models:
+- User
+- Customer
+- Project
+- Task
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Refer to `prisma/schema.prisma` for the complete database schema.
 
-## Learn More
+## API Routes
 
-To learn more about Next.js, take a look at the following resources:
+- `/api/auth/*` - Authentication endpoints
+- `/api/customers/*` - Customer management
+- `/api/projects/*` - Project management
+- `/api/tasks/*` - Task management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Vercel Deployment
 
-## Deploy on Vercel
+1. Push your code to a Git repository
+2. Import the project in Vercel
+3. Set up environment variables in Vercel dashboard
+4. Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Manual Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Start the production server:
+   ```bash
+   npm start
+   ```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
