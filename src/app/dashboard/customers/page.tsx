@@ -50,6 +50,7 @@ interface Customer {
   phone: string;
   city: string;
   state: string;
+  status: 'IN_PROGRESS' | 'ENGAGED' | 'DEAD';
   createdAt: string;
 }
 
@@ -157,6 +158,37 @@ export default function CustomersPage() {
     }
   };
 
+  // Update customer status
+  const updateCustomerStatus = async (customerId: string, newStatus: 'IN_PROGRESS' | 'ENGAGED' | 'DEAD') => {
+    try {
+      const response = await fetch(`/api/customers/${customerId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update customer status');
+      }
+
+      // Update local state
+      setCustomers(prev => 
+        prev.map(customer => 
+          customer.id === customerId 
+            ? { ...customer, status: newStatus } 
+            : customer
+        )
+      );
+
+      toast.success(`Customer status updated to ${newStatus.toLowerCase().replace('_', ' ')}`);
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+      toast.error('Failed to update customer status');
+    }
+  };
+
   // Filter customers based on search query
   const filteredCustomers = customers.filter(customer => {
     const searchTerm = searchQuery.toLowerCase();
@@ -166,7 +198,8 @@ export default function CustomersPage() {
       customer.email.toLowerCase().includes(searchTerm) ||
       customer.phone.toLowerCase().includes(searchTerm) ||
       (customer.city && customer.city.toLowerCase().includes(searchTerm)) ||
-      (customer.state && customer.state.toLowerCase().includes(searchTerm))
+      (customer.state && customer.state.toLowerCase().includes(searchTerm)) ||
+      (customer.status && customer.status.toLowerCase().includes(searchTerm))
     );
   });
 
@@ -290,6 +323,7 @@ export default function CustomersPage() {
                 <Table.Th>Customer</Table.Th>
                 <Table.Th>Contact</Table.Th>
                 <Table.Th>Location</Table.Th>
+                <Table.Th>Status</Table.Th>
                 <Table.Th>Created</Table.Th>
                 <Table.Th style={{ width: 80 }}>Actions</Table.Th>
               </Table.Tr>
@@ -297,7 +331,7 @@ export default function CustomersPage() {
             <Table.Tbody>
               {paginatedCustomers.length === 0 ? (
                 <Table.Tr>
-                  <Table.Td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <Table.Td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
                     <Box py="xl">
                       <ThemeIcon size={40} radius="xl" color="gray" variant="light" mx="auto" mb="md">
                         <IconUsers size={20} />
@@ -363,6 +397,20 @@ export default function CustomersPage() {
                       )}
                     </Table.Td>
                     <Table.Td>
+                      <Badge 
+                        variant="filled" 
+                        color={
+                          customer.status === 'IN_PROGRESS' ? 'green' : 
+                          customer.status === 'ENGAGED' ? 'yellow' : 
+                          'red'
+                        }
+                      >
+                        {customer.status === 'IN_PROGRESS' ? 'In Progress' : 
+                         customer.status === 'ENGAGED' ? 'Engaged' : 
+                         'Dead'}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td>
                       <Text size="sm">{new Date(customer.createdAt).toLocaleDateString()}</Text>
                     </Table.Td>
                     <Table.Td>
@@ -392,6 +440,7 @@ export default function CustomersPage() {
                             </ActionIcon>
                           </Menu.Target>
                           <Menu.Dropdown>
+                            <Menu.Label>Actions</Menu.Label>
                             <Menu.Item 
                               leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
                               color="red"
@@ -401,6 +450,29 @@ export default function CustomersPage() {
                               }}
                             >
                               Delete
+                            </Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Label>Update Status</Menu.Label>
+                            <Menu.Item 
+                              leftSection={<div style={{ width: rem(14), height: rem(14), backgroundColor: 'green', borderRadius: '50%' }} />}
+                              onClick={() => updateCustomerStatus(customer.id, 'IN_PROGRESS')}
+                              disabled={customer.status === 'IN_PROGRESS'}
+                            >
+                              In Progress
+                            </Menu.Item>
+                            <Menu.Item 
+                              leftSection={<div style={{ width: rem(14), height: rem(14), backgroundColor: 'yellow', borderRadius: '50%' }} />}
+                              onClick={() => updateCustomerStatus(customer.id, 'ENGAGED')}
+                              disabled={customer.status === 'ENGAGED'}
+                            >
+                              Engaged
+                            </Menu.Item>
+                            <Menu.Item 
+                              leftSection={<div style={{ width: rem(14), height: rem(14), backgroundColor: 'red', borderRadius: '50%' }} />}
+                              onClick={() => updateCustomerStatus(customer.id, 'DEAD')}
+                              disabled={customer.status === 'DEAD'}
+                            >
+                              Dead
                             </Menu.Item>
                           </Menu.Dropdown>
                         </Menu>

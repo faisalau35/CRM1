@@ -54,6 +54,7 @@ export async function PATCH(
       ssn, 
       driverLicense,
       notes,
+      status,
       creditCards 
     } = json;
 
@@ -92,6 +93,7 @@ export async function PATCH(
         ssn: ssn || null,
         driverLicense: driverLicense || null,
         notes: notes || null,
+        status: status || undefined,
       },
     });
 
