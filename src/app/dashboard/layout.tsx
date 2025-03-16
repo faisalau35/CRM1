@@ -62,11 +62,6 @@ const navItems: NavItem[] = [
     badge: "New",
   },
   {
-    title: "Projects",
-    href: "/dashboard/projects",
-    icon: <IconClipboardList size="1.2rem" stroke={1.5} />,
-  },
-  {
     title: "Settings",
     href: "/dashboard/settings",
     icon: <IconSettings size="1.2rem" stroke={1.5} />,
