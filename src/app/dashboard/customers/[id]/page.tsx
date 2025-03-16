@@ -89,6 +89,26 @@ interface Customer {
   updatedAt: string;
 }
 
+// Reusable component for text with copy button
+const CopyableText = ({ value, children }: { value: string, children?: React.ReactNode }) => {
+  if (!value) return <Text>—</Text>;
+  
+  return (
+    <Group gap="xs">
+      {children || <Text>{value}</Text>}
+      <CopyButton value={value} timeout={2000}>
+        {({ copied, copy }) => (
+          <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
+            <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
+              {copied ? <IconCheck size="1rem" /> : <IconCopy size="1rem" />}
+            </ActionIcon>
+          </Tooltip>
+        )}
+      </CopyButton>
+    </Group>
+  );
+};
+
 export default function CustomerPage() {
   const router = useRouter();
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -596,7 +616,9 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{customer.firstName} {customer.lastName}</Text>
+                  <CopyableText value={`${customer.firstName} ${customer.lastName}`}>
+                    <Text>{customer.firstName} {customer.lastName}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -609,18 +631,9 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Group gap="xs">
+                  <CopyableText value={customer.email}>
                     <Text>{customer.email}</Text>
-                    <CopyButton value={customer.email} timeout={2000}>
-                      {({ copied, copy }) => (
-                        <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
-                          <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
-                            {copied ? <IconCheck size="1rem" /> : <IconCopy size="1rem" />}
-                          </ActionIcon>
-                        </Tooltip>
-                      )}
-                    </CopyButton>
-                  </Group>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -633,18 +646,9 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Group gap="xs">
+                  <CopyableText value={customer.phone}>
                     <Text>{formatPhoneNumber(customer.phone)}</Text>
-                    <CopyButton value={customer.phone} timeout={2000}>
-                      {({ copied, copy }) => (
-                        <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
-                          <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
-                            {copied ? <IconCheck size="1rem" /> : <IconCopy size="1rem" />}
-                          </ActionIcon>
-                        </Tooltip>
-                      )}
-                    </CopyButton>
-                  </Group>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -657,7 +661,9 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{formatSSN(customer.ssn)}</Text>
+                  <CopyableText value={customer.ssn}>
+                    <Text>{formatSSN(customer.ssn)}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -670,7 +676,9 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{new Date(customer.dateOfBirth).toLocaleDateString()}</Text>
+                  <CopyableText value={new Date(customer.dateOfBirth).toLocaleDateString()}>
+                    <Text>{new Date(customer.dateOfBirth).toLocaleDateString()}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               {customer.driverLicense && (
@@ -684,7 +692,9 @@ export default function CustomerPage() {
                     </Group>
                   </Table.Td>
                   <Table.Td>
-                    <Text>{customer.driverLicense}</Text>
+                    <CopyableText value={customer.driverLicense}>
+                      <Text>{customer.driverLicense}</Text>
+                    </CopyableText>
                   </Table.Td>
                 </Table.Tr>
               )}
@@ -708,7 +718,9 @@ export default function CustomerPage() {
                   <Text fw={500}>Street Address</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{customer.address}</Text>
+                  <CopyableText value={customer.address}>
+                    <Text>{customer.address}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -716,7 +728,9 @@ export default function CustomerPage() {
                   <Text fw={500}>City</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{customer.city}</Text>
+                  <CopyableText value={customer.city}>
+                    <Text>{customer.city}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -724,7 +738,9 @@ export default function CustomerPage() {
                   <Text fw={500}>State</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{customer.state}</Text>
+                  <CopyableText value={customer.state}>
+                    <Text>{customer.state}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -732,7 +748,9 @@ export default function CustomerPage() {
                   <Text fw={500}>Zip Code</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{customer.zipCode}</Text>
+                  <CopyableText value={customer.zipCode}>
+                    <Text>{customer.zipCode}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -740,7 +758,9 @@ export default function CustomerPage() {
                   <Text fw={500}>Customer Since</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{new Date(customer.createdAt).toLocaleDateString()}</Text>
+                  <CopyableText value={new Date(customer.createdAt).toLocaleDateString()}>
+                    <Text>{new Date(customer.createdAt).toLocaleDateString()}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -748,7 +768,9 @@ export default function CustomerPage() {
                   <Text fw={500}>Last Updated</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text>{new Date(customer.updatedAt).toLocaleDateString()}</Text>
+                  <CopyableText value={new Date(customer.updatedAt).toLocaleDateString()}>
+                    <Text>{new Date(customer.updatedAt).toLocaleDateString()}</Text>
+                  </CopyableText>
                 </Table.Td>
               </Table.Tr>
             </Table.Tbody>
@@ -796,7 +818,9 @@ export default function CustomerPage() {
                             <Text fw={500}>Cardholder Name</Text>
                           </Table.Td>
                           <Table.Td>
-                            <Text>{card.cardholderName}</Text>
+                            <CopyableText value={card.cardholderName}>
+                              <Text>{card.cardholderName}</Text>
+                            </CopyableText>
                           </Table.Td>
                         </Table.Tr>
                         <Table.Tr>
@@ -805,16 +829,9 @@ export default function CustomerPage() {
                           </Table.Td>
                           <Table.Td>
                             <Group gap="xs">
-                              <Text>{formatCardNumber(card.cardNumber)}</Text>
-                              <CopyButton value={card.cardNumber} timeout={2000}>
-                                {({ copied, copy }) => (
-                                  <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
-                                    <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
-                                      {copied ? <IconCheck size="1rem" /> : <IconCopy size="1rem" />}
-                                    </ActionIcon>
-                                  </Tooltip>
-                                )}
-                              </CopyButton>
+                              <CopyableText value={formatCardNumber(card.cardNumber)}>
+                                <Text>{formatCardNumber(card.cardNumber)}</Text>
+                              </CopyableText>
                             </Group>
                           </Table.Td>
                         </Table.Tr>
@@ -823,7 +840,9 @@ export default function CustomerPage() {
                             <Text fw={500}>Expiration</Text>
                           </Table.Td>
                           <Table.Td>
-                            <Text>{card.expiryMonth}/{card.expiryYear}</Text>
+                            <CopyableText value={`${card.expiryMonth}/${card.expiryYear}`}>
+                              <Text>{card.expiryMonth}/{card.expiryYear}</Text>
+                            </CopyableText>
                           </Table.Td>
                         </Table.Tr>
                         <Table.Tr>
@@ -831,7 +850,9 @@ export default function CustomerPage() {
                             <Text fw={500}>CVV</Text>
                           </Table.Td>
                           <Table.Td>
-                            <Text>{card.cvv}</Text>
+                            <CopyableText value={card.cvv}>
+                              <Text>{card.cvv}</Text>
+                            </CopyableText>
                           </Table.Td>
                         </Table.Tr>
                       </Table.Tbody>
@@ -858,27 +879,39 @@ export default function CustomerPage() {
                         <SimpleGrid cols={2} spacing="xs" mb="md">
                           <div>
                             <Text size="xs" c="dimmed">BIN</Text>
-                            <Text>{card.cardNumber.slice(0, 6) || "—"}</Text>
+                            <CopyableText value={card.cardNumber.slice(0, 6) || ""}>
+                              <Text>{card.cardNumber.slice(0, 6) || "—"}</Text>
+                            </CopyableText>
                           </div>
                           <div>
                             <Text size="xs" c="dimmed">Scheme</Text>
-                            <Text tt="capitalize">{card.binInfo?.scheme || "—"}</Text>
+                            <CopyableText value={card.binInfo?.scheme || ""}>
+                              <Text tt="capitalize">{card.binInfo?.scheme || "—"}</Text>
+                            </CopyableText>
                           </div>
                           <div>
                             <Text size="xs" c="dimmed">Type</Text>
-                            <Text tt="capitalize">{card.binInfo?.type || "—"}</Text>
+                            <CopyableText value={card.binInfo?.type || ""}>
+                              <Text tt="capitalize">{card.binInfo?.type || "—"}</Text>
+                            </CopyableText>
                           </div>
                           <div>
                             <Text size="xs" c="dimmed">Brand</Text>
-                            <Text>{card.binInfo?.brand || "—"}</Text>
+                            <CopyableText value={card.binInfo?.brand || ""}>
+                              <Text>{card.binInfo?.brand || "—"}</Text>
+                            </CopyableText>
                           </div>
                           <div>
                             <Text size="xs" c="dimmed">Country</Text>
-                            <Text>{card.binInfo?.country?.name || "—"}</Text>
+                            <CopyableText value={card.binInfo?.country?.name || ""}>
+                              <Text>{card.binInfo?.country?.name || "—"}</Text>
+                            </CopyableText>
                           </div>
                           <div>
                             <Text size="xs" c="dimmed">Bank</Text>
-                            <Text>{card.binInfo?.bank?.name || "—"}</Text>
+                            <CopyableText value={card.binInfo?.bank?.name || ""}>
+                              <Text>{card.binInfo?.bank?.name || "—"}</Text>
+                            </CopyableText>
                           </div>
                         </SimpleGrid>
                         {card.binInfo?.error && (
