@@ -28,6 +28,13 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            twoFactorEnabled: true,
+          },
         });
 
         if (!user) {
@@ -66,6 +73,12 @@ export const authOptions: NextAuthOptions = {
         where: {
           email: token.email!,
         },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          twoFactorEnabled: true,
+        },
       });
 
       if (!dbUser) {
@@ -79,6 +92,7 @@ export const authOptions: NextAuthOptions = {
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
+        twoFactorEnabled: dbUser.twoFactorEnabled,
       };
     },
   },

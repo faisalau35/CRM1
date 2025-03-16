@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   Title, 
@@ -31,7 +31,8 @@ import {
   IconBrandStripe,
   IconMail,
   IconUpload,
-  IconTrash
+  IconTrash,
+  IconQrcode
 } from "@tabler/icons-react";
 
 export default function SettingsPage() {
@@ -267,7 +268,7 @@ export default function SettingsPage() {
                 <Text size="sm" c="dimmed">
                   Add an extra layer of security to your account by enabling two-factor authentication.
                 </Text>
-                <Button variant="outline">Enable 2FA</Button>
+                <TwoFactorAuthSection />
                 
                 <Group justify="flex-end">
                   <Button type="submit" color="blue">Update Password</Button>
@@ -436,6 +437,246 @@ export default function SettingsPage() {
           </Tabs.Panel>
         </Tabs>
       </Card>
+    </div>
+  );
+}
+
+function TwoFactorAuthSection() {
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [token, setToken] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+
+  useEffect(() => {
+    // Check if 2FA is enabled for the current user
+    const check2FAStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/two-factor/status');
+        const data = await response.json();
+        setIs2FAEnabled(data.enabled);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking 2FA status:', error);
+        setIsLoading(false);
+      }
+    };
+
+    check2FAStatus();
+  }, []);
+
+  const handleSetup2FA = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/auth/two-factor/setup');
+      const data = await response.json();
+      
+      if (data.qrCode && data.secret) {
+        setQrCode(data.qrCode);
+        setSecret(data.secret);
+        setIsSetupModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error setting up 2FA:', error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to set up 2FA",
+        color: "red"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    try {
+      if (!token || !secret) return;
+
+      setIsLoading(true);
+      const response = await fetch('/api/auth/two-factor/setup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, secret }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setIs2FAEnabled(true);
+        setIsSetupModalOpen(false);
+        setBackupCodes(data.backupCodes || []);
+        setShowBackupCodes(true);
+        
+        notifications.show({
+          title: "Success",
+          message: "2FA enabled successfully",
+          color: "green"
+        });
+      } else {
+        notifications.show({
+          title: "Error",
+          message: data.error || "Invalid verification code",
+          color: "red"
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying 2FA:', error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to verify 2FA",
+        color: "red"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/auth/two-factor/disable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: '' }), // In a real app, you would ask for the password
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setIs2FAEnabled(false);
+        notifications.show({
+          title: "Success",
+          message: "2FA disabled successfully",
+          color: "green"
+        });
+      } else {
+        notifications.show({
+          title: "Error",
+          message: data.error || "Failed to disable 2FA",
+          color: "red"
+        });
+      }
+    } catch (error) {
+      console.error('Error disabling 2FA:', error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to disable 2FA",
+        color: "red"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      {is2FAEnabled ? (
+        <div>
+          <Text color="green" mb="sm">Two-factor authentication is enabled.</Text>
+          <Button 
+            variant="outline" 
+            color="red" 
+            onClick={handleDisable2FA}
+            loading={isLoading}
+          >
+            Disable 2FA
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <Text color="red" mb="sm">Two-factor authentication is not enabled.</Text>
+          <Button 
+            variant="outline" 
+            onClick={handleSetup2FA}
+            loading={isLoading}
+          >
+            Enable 2FA
+          </Button>
+        </div>
+      )}
+
+      {/* 2FA Setup Modal */}
+      {isSetupModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Set up Two-Factor Authentication</h2>
+            <p className="mb-4">Scan this QR code with your authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator).</p>
+            
+            {qrCode && (
+              <div className="flex justify-center mb-4">
+                <img src={qrCode} alt="QR Code for 2FA" className="w-48 h-48" />
+              </div>
+            )}
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Enter the 6-digit code from your app</label>
+              <input
+                type="text"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="w-full p-2 border rounded"
+                placeholder="000000"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsSetupModalOpen(false)}
+                className="px-4 py-2 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVerify2FA}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                disabled={!token || token.length !== 6 || isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Backup Codes Modal */}
+      {showBackupCodes && backupCodes.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Backup Codes</h2>
+            <p className="mb-4">Save these backup codes in a secure place. You can use them to sign in if you lose access to your authenticator app.</p>
+            
+            <div className="bg-gray-100 p-4 rounded mb-4">
+              <div className="grid grid-cols-2 gap-2">
+                {backupCodes.map((code, index) => (
+                  <div key={index} className="font-mono">{code}</div>
+                ))}
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">Each code can only be used once. If you use a backup code to sign in, you'll get a new set of codes.</p>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowBackupCodes(false)}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
