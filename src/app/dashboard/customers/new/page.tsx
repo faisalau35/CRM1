@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,6 +86,7 @@ const getCardType = (cardNumber: string): string => {
 
 export default function NewCustomerPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [ssn, setSsn] = useState("");
   const [creditCards, setCreditCards] = useState<CreditCard[]>([{
@@ -103,6 +105,13 @@ export default function NewCustomerPage() {
   const [secondaryEmail, setSecondaryEmail] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
   // Clear any saved credit card data when component mounts
   useEffect(() => {
@@ -272,6 +281,13 @@ export default function NewCustomerPage() {
     event.preventDefault();
     setIsLoading(true);
 
+    // Check if user is authenticated
+    if (!session) {
+      toast.error("You must be logged in to create a customer");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const formData = new FormData(event.currentTarget);
       
@@ -317,6 +333,7 @@ export default function NewCustomerPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {

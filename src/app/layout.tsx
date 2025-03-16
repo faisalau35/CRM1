@@ -4,6 +4,7 @@ import "./globals.css";
 import { MantineProvider, ColorSchemeScript } from "@mantine/core";
 import '@mantine/core/styles.css';
 import { Toaster } from "sonner";
+import AuthProvider from "@/components/auth-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,10 +47,12 @@ export default function RootLayout({
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no" />
       </head>
       <body className={inter.className}>
-        <MantineProvider theme={theme} defaultColorScheme="light">
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </MantineProvider>
+        <AuthProvider>
+          <MantineProvider theme={theme} defaultColorScheme="light">
+            {children}
+            <Toaster position="top-right" richColors closeButton />
+          </MantineProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -3,19 +3,48 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+// Define interface for credit card data
+interface CreditCardData {
+  id?: string;
+  cardholderName: string;
+  cardNumber: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cvv: string;
+  isDefault?: boolean;
+  bin?: string;
+  bankName?: string;
+  cardType?: string;
+  scheme?: string;
+  country?: string;
+}
+
 export async function POST(request: Request) {
   try {
+    // Get the session from the request
     const session = await getServerSession(authOptions);
+    console.log("Session in API route:", session ? "Session exists" : "No session", 
+      session?.user ? `User: ${session.user.email}` : "No user in session");
+    
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ 
+        error: "Unauthorized", 
+        details: "No valid session or user email found" 
+      }, { status: 401 });
     }
 
+    // Find the user by email
     const user = await db.user.findUnique({
       where: { email: session.user.email },
     });
+    
+    console.log("User lookup result:", user ? `User found with ID: ${user.id}` : "User not found");
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ 
+        error: "User not found", 
+        details: `No user found with email: ${session.user.email}` 
+      }, { status: 404 });
     }
 
     const json = await request.json();
@@ -69,6 +98,50 @@ export async function POST(request: Request) {
       },
     });
     console.log("Customer created successfully:", customer.id);
+
+    // Handle credit cards if provided
+    if (creditCards && creditCards.length > 0) {
+      console.log(`Processing ${creditCards.length} credit cards for customer ${customer.id}`);
+      
+      // Create credit cards for the customer
+      await Promise.all(creditCards.map(async (card: CreditCardData) => {
+        // Create new card
+        const newCard = await db.creditCard.create({
+          data: {
+            cardholderName: card.cardholderName,
+            cardNumber: card.cardNumber,
+            expiryMonth: card.expiryMonth,
+            expiryYear: card.expiryYear,
+            cvv: card.cvv,
+            isDefault: card.isDefault || false,
+            customerId: customer.id,
+          },
+        });
+        
+        console.log(`Created credit card ${newCard.id} for customer ${customer.id}`);
+        
+        // If BIN data is provided, store it in the cache
+        if (card.bin) {
+          await db.binCache.upsert({
+            where: { bin: card.bin },
+            update: {
+              bankName: card.bankName,
+              cardType: card.cardType,
+              scheme: card.scheme,
+              country: card.country,
+              updatedAt: new Date(),
+            },
+            create: {
+              bin: card.bin,
+              bankName: card.bankName,
+              cardType: card.cardType,
+              scheme: card.scheme,
+              country: card.country,
+            },
+          });
+        }
+      }));
+    }
 
     // Sanitize sensitive data before returning
     const sanitizedCustomer = {

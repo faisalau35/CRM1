@@ -5,6 +5,11 @@ import { getToken } from 'next-auth/jwt';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Skip middleware for API routes
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+  
   // Check if the path starts with /dashboard
   const isProtectedRoute = pathname.startsWith('/dashboard');
   
@@ -33,6 +38,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/login'
+    '/login',
+    '/api/:path*'
   ],
 }; 
