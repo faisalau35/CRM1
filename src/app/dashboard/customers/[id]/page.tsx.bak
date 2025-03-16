@@ -24,7 +24,6 @@ import {
   Modal,
   CopyButton,
   Box,
-  Textarea,
 } from "@mantine/core";
 import {
   IconUser,
@@ -41,8 +40,6 @@ import {
   IconId,
   IconLicense,
   IconRefresh,
-  IconDeviceFloppy,
-  IconX,
 } from "@tabler/icons-react";
 import { lookupCardDetails } from "@/lib/binLookup";
 
@@ -122,9 +119,6 @@ export default function CustomerPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshingBin, setRefreshingBin] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
 
   // Fetch customer data
   useEffect(() => {
@@ -165,7 +159,6 @@ export default function CustomerPage() {
           }
           
           setCustomer(data);
-          setNotesValue(data.notes || "");
           
           // After setting customer data, load BIN info if there are credit cards
           if (data.creditCards?.length > 0) {
@@ -554,42 +547,6 @@ export default function CustomerPage() {
     }
   };
 
-  // Save customer notes
-  const saveCustomerNotes = async () => {
-    if (!customer) return;
-    
-    setSavingNotes(true);
-    try {
-      const response = await fetch(`/api/customers/${customer.id}/notes`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ notes: notesValue }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save notes');
-      }
-      
-      const updatedCustomer = await response.json();
-      setCustomer(updatedCustomer);
-      setIsEditingNotes(false);
-      toast.success('Notes saved successfully');
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error('Failed to save notes');
-    } finally {
-      setSavingNotes(false);
-    }
-  };
-
-  // Cancel notes editing
-  const cancelNotesEditing = () => {
-    setNotesValue(customer?.notes || "");
-    setIsEditingNotes(false);
-  };
-
   if (loading) {
     return (
       <Flex justify="center" align="center" h="70vh" direction="column" gap="md">
@@ -693,27 +650,10 @@ export default function CustomerPage() {
                 <Table.Td>
                   <CopyableText value={customer.email}>
                     <Text>{customer.email}</Text>
+                    </CopyableText>
                   </CopyableText>
                 </Table.Td>
               </Table.Tr>
-              <Table.Tr>
-                <Table.Td>
-                  <Group gap="xs">
-                    <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
-                      <IconMail size="0.8rem" />
-                    </ThemeIcon>
-                    <Text fw={500}>Secondary Email</Text>
-                  </Group>
-                </Table.Td>
-                <Table.Td>
-                  {customer.secondaryEmail ? (
-                    <CopyableText value={customer.secondaryEmail}>
-                      <Text>{customer.secondaryEmail}</Text>
-                    </CopyableText>
-                  ) : (
-                    <Text c="dimmed">Not provided</Text>
-                  )}
-                </Table.Td>
               </Table.Tr>
               <Table.Tr>
                 <Table.Td>
@@ -748,24 +688,6 @@ export default function CustomerPage() {
                     <Text c="dimmed">Not provided</Text>
                   )}
                 </Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>
-                  <Group gap="xs">
-                    <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
-                      <IconId size="0.8rem" />
-                    </ThemeIcon>
-                    <Text fw={500}>SSN</Text>
-                  </Group>
-                </Table.Td>
-                <Table.Td>
-                  <CopyableText value={customer.ssn}>
-                    <Text>{formatSSN(customer.ssn)}</Text>
-                  </CopyableText>
-                </Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td>
                   <Group gap="xs">
                     <ThemeIcon size="sm" radius="xl" color="blue" variant="light">
                       <IconCalendar size="0.8rem" />
@@ -879,59 +801,17 @@ export default function CustomerPage() {
       {/* Customer Notes */}
       <Card shadow="sm" radius="md" withBorder mb="xl">
         <Card.Section withBorder inheritPadding py="xs" mb="md">
-          <Group justify="space-between">
-            <Group>
-              <IconUser size="1.2rem" color="var(--mantine-color-blue-6)" />
-              <Title order={4}>Customer Notes</Title>
-            </Group>
-            {!isEditingNotes ? (
-              <ActionIcon 
-                variant="subtle" 
-                color="blue" 
-                onClick={() => setIsEditingNotes(true)}
-                disabled={loading || isDeleting}
-              >
-                <IconEdit size="1rem" />
-              </ActionIcon>
-            ) : (
-              <Group gap="xs">
-                <ActionIcon 
-                  variant="subtle" 
-                  color="red" 
-                  onClick={cancelNotesEditing}
-                  disabled={savingNotes}
-                >
-                  <IconX size="1rem" />
-                </ActionIcon>
-                <ActionIcon 
-                  variant="subtle" 
-                  color="green" 
-                  onClick={saveCustomerNotes}
-                  loading={savingNotes}
-                >
-                  <IconDeviceFloppy size="1rem" />
-                </ActionIcon>
-              </Group>
-            )}
+          <Group>
+            <IconUser size="1.2rem" color="var(--mantine-color-blue-6)" />
+            <Title order={4}>Customer Notes</Title>
           </Group>
         </Card.Section>
         
         <Box p="md">
-          {!isEditingNotes ? (
-            customer?.notes ? (
-              <Text>{customer.notes}</Text>
-            ) : (
-              <Text c="dimmed">No notes available for this customer.</Text>
-            )
+          {customer.notes ? (
+            <Text>{customer.notes}</Text>
           ) : (
-            <Textarea
-              placeholder="Add notes about this customer..."
-              value={notesValue}
-              onChange={(e) => setNotesValue(e.target.value)}
-              minRows={3}
-              disabled={savingNotes}
-              autosize
-            />
+            <Text c="dimmed">No notes available for this customer.</Text>
           )}
         </Box>
       </Card>
