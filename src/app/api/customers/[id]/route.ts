@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -19,9 +19,10 @@ interface CreditCardData {
   country?: string;
 }
 
+// Next.js 15 compliant route handler
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string }}
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -37,7 +38,7 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const customerId = params.id;
+    const customerId = context.params.id;
     const json = await request.json();
     const { 
       fullName,
@@ -215,13 +216,14 @@ export async function PATCH(
   }
 }
 
+// Next.js 15 compliant route handler
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string }}
 ) {
   try {
     // Get the id from the params
-    const id = params.id;
+    const id = context.params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
@@ -254,13 +256,14 @@ export async function GET(
   }
 }
 
+// Next.js 15 compliant route handler
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string }}
 ) {
   try {
     // Get the id from the params
-    const id = params.id;
+    const id = context.params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+// Next.js 15 compliant route handler
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request, 
+  context: { params: { id: string }}
 ) {
   try {
-    const customerId = params.id;
+    const customerId = context.params.id;
 
     if (!customerId) {
       return NextResponse.json(
