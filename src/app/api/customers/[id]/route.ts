@@ -21,7 +21,7 @@ interface CreditCardData {
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -37,7 +37,7 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const customerId = context.params.id;
+    const customerId = params.id;
     const json = await request.json();
     const { 
       fullName,
@@ -217,11 +217,11 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Get the id from the context params
-    const id = context.params.id;
+    // Get the id from the params
+    const id = params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
@@ -256,11 +256,11 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Get the id from the context params
-    const id = context.params.id;
+    // Get the id from the params
+    const id = params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
