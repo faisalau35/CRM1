@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 // Next.js 15 compliant route handler
 export async function GET(
-  request: Request,
-  context: { params: { id: string }}
+  request: Request
 ) {
   try {
-    const customerId = context.params.id;
+    // Extract the ID from the URL path segments
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const customerId = pathSegments[pathSegments.indexOf('customers') + 1];
 
     if (!customerId) {
       return NextResponse.json(
