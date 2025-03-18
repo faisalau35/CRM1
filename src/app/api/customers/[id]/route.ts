@@ -215,10 +215,13 @@ export async function PATCH(
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    // Get the id from the URL path
-    const id = request.nextUrl.pathname.split('/').pop();
+    // Get the id from the context params
+    const id = context.params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
@@ -251,10 +254,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    // Get the id from the URL path
-    const id = request.nextUrl.pathname.split('/').pop();
+    // Get the id from the context params
+    const id = context.params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });

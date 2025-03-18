@@ -3,10 +3,10 @@ import { db } from '@/lib/db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const customerId = params.id;
+    const customerId = context.params.id;
 
     if (!customerId) {
       return NextResponse.json(

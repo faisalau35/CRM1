@@ -3,11 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export async function PATCH(request: Request) {
+export async function PATCH(
+  request: Request,
+  context: { params: { id: string } }
+) {
   try {
-    // Get the ID from the URL path
-    const pathParts = request.url.split('/');
-    const id = pathParts[pathParts.length - 2]; // Get the ID from the URL path
+    const id = context.params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
