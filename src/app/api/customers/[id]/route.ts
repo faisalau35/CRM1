@@ -21,8 +21,7 @@ interface CreditCardData {
 
 // Next.js 15 compliant route handler
 export async function PATCH(
-  request: Request,
-  context: { params: { id: string }}
+  request: Request
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +37,11 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const customerId = context.params.id;
+    // Extract the ID from the URL path segments
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const customerId = pathSegments[pathSegments.indexOf('customers') + 1];
+    
     const json = await request.json();
     const { 
       fullName,
@@ -218,12 +221,13 @@ export async function PATCH(
 
 // Next.js 15 compliant route handler
 export async function GET(
-  request: Request,
-  context: { params: { id: string }}
+  request: Request
 ) {
   try {
-    // Get the id from the params
-    const id = context.params.id;
+    // Extract the ID from the URL path segments
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.indexOf('customers') + 1];
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
@@ -258,12 +262,13 @@ export async function GET(
 
 // Next.js 15 compliant route handler
 export async function DELETE(
-  request: Request,
-  context: { params: { id: string }}
+  request: Request
 ) {
   try {
-    // Get the id from the params
-    const id = context.params.id;
+    // Extract the ID from the URL path segments
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.indexOf('customers') + 1];
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
