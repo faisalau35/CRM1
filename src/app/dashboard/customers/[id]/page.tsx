@@ -99,7 +99,7 @@ interface Customer {
 }
 
 // Reusable component for text with copy button
-const CopyableText = ({ value, children }: { value: string, children?: React.ReactNode }) => {
+const CopyableText = ({ value, children }: { value?: string, children?: React.ReactNode }) => {
   if (!value) return <Text>—</Text>;
   
   return (
@@ -206,7 +206,7 @@ export default function CustomerPage() {
   }, []);
 
   // Format SSN for display
-  const formatSSN = (ssn: string) => {
+  const formatSSN = (ssn?: string) => {
     if (!ssn) return "—";
     const cleaned = ssn.replace(/\D/g, '');
     if (cleaned.length !== 9) return ssn;
@@ -214,7 +214,7 @@ export default function CustomerPage() {
   };
 
   // Format phone number for display
-  const formatPhoneNumber = (phone: string) => {
+  const formatPhoneNumber = (phone?: string) => {
     if (!phone) return "—";
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length !== 10) return phone;
@@ -222,11 +222,23 @@ export default function CustomerPage() {
   };
 
   // Format credit card number for display - no masking
-  const formatCardNumber = (cardNumber: string) => {
+  const formatCardNumber = (cardNumber?: string) => {
     if (!cardNumber) return "—";
     const cleaned = cardNumber.replace(/\D/g, '');
     if (cleaned.length !== 16) return cardNumber;
     return cleaned;
+  };
+
+  // Format dateOfBirth with proper format
+  const formatDateOfBirth = (dateString?: string): string => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   // Update the fetchAllBinInfo function to ensure it properly loads BIN information
@@ -542,20 +554,6 @@ export default function CustomerPage() {
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
       setIsDeleting(false);
-    }
-  };
-
-  // Add a function to format date of birth consistently as MM/DD/YY
-  const formatDateOfBirth = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const year = date.getFullYear().toString().slice(-2);
-      return `${month}/${day}/${year}`;
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateString;
     }
   };
 
