@@ -41,6 +41,7 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import SessionTimer from "@/components/session-timer";
 
 interface NavItem {
   title: string;
@@ -163,6 +164,8 @@ export default function DashboardLayout({
                 </Badge>
               </ActionIcon>
             </Tooltip>
+            
+            <SessionTimer />
             
             <Tooltip label="Toggle theme" position="bottom">
               <ThemeToggle />
