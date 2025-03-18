@@ -52,22 +52,11 @@ export async function GET() {
     
     // Sample data
     const sampleCustomers = await db.customer.findMany({
-      take: 3,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true
-      }
+      take: 3
     });
     
     const sampleCreditCards = await db.creditCard.findMany({
-      take: 3,
-      select: {
-        id: true,
-        customerId: true,
-        cardholderName: true
-      }
+      take: 3
     });
     
     // Check if any credit cards exist for the sample customers
