@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -29,12 +30,15 @@ async function main() {
     userId = adminUser.id;
     console.log('Using existing admin user');
   } else {
-    // Create a new admin user
+    // Create a new admin user with properly hashed password
+    const password = 'admin123';
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     const newAdmin = await prisma.user.create({
       data: {
         name: 'Admin User',
         email: 'admin@example.com',
-        password: '$2a$10$GmQzTXcl5Ojh5zVoNgVxHOaZyf0gqQBYYY5D3YH0qWyKA6Ag/Kdh6', // hashed 'admin123'
+        password: hashedPassword, // Properly hashed password
         isAdmin: true
       }
     });
@@ -48,13 +52,13 @@ async function main() {
   for (let i = 0; i < 50; i++) {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
+    const fullName = `${firstName} ${lastName}`;
     const email = faker.internet.email({ firstName, lastName });
     
     // Create customer
     const customer = await prisma.customer.create({
       data: {
-        firstName,
-        lastName,
+        fullName,
         email,
         secondaryEmail: Math.random() > 0.7 ? faker.internet.email() : null,
         phone: faker.phone.number(),
@@ -80,7 +84,7 @@ async function main() {
     const cardCount = Math.floor(Math.random() * 3) + 1;
     
     for (let j = 0; j < cardCount; j++) {
-      const cardholderName = `${firstName} ${lastName}`;
+      const cardholderName = fullName;
       const expiryMonth = Math.floor(Math.random() * 12) + 1;
       const currentYear = new Date().getFullYear();
       const expiryYear = currentYear + Math.floor(Math.random() * 5) + 1;

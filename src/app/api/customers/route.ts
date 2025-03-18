@@ -54,8 +54,7 @@ export async function POST(request: Request) {
     }, null, 2));
     
     const { 
-      firstName, 
-      lastName, 
+      fullName,
       email, 
       secondaryEmail, 
       phone, 
@@ -73,16 +72,15 @@ export async function POST(request: Request) {
     } = json;
 
     // Validate required fields
-    if (!firstName || !lastName) {
-      return NextResponse.json({ error: "First name and last name are required" }, { status: 400 });
+    if (!fullName) {
+      return NextResponse.json({ error: "Full name is required" }, { status: 400 });
     }
 
     // Create the customer
-    console.log("Creating customer with data:", { firstName, lastName, email, phone });
+    console.log("Creating customer with data:", { fullName, email, phone });
     const customer = await db.customer.create({
       data: {
-        firstName,
-        lastName,
+        fullName,
         email: email || null,
         secondaryEmail: secondaryEmail || null,
         phone: phone || null,
@@ -171,7 +169,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -181,10 +179,17 @@ export async function GET() {
       });
     }
 
+    // Check if we should include all details (including credit cards)
+    const includeAll = new URL(request.url).searchParams.get('includeAll') === 'true';
+    console.log(`GET customers with includeAll=${includeAll}`);
+
     const customers = await db.customer.findMany({
       where: {
         userId: session.user.id,
       },
+      include: includeAll ? {
+        creditCards: true
+      } : undefined,
       orderBy: {
         createdAt: "desc",
       },

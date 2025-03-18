@@ -60,7 +60,6 @@ export async function POST(request: Request) {
       const sampleCustomer = customersWithCards[0];
       console.log('Sample customer with cards:', {
         id: sampleCustomer.id,
-        name: `${sampleCustomer.firstName} ${sampleCustomer.lastName}`,
         cardCount: sampleCustomer.creditCards.length,
         firstCard: sampleCustomer.creditCards[0] ? {
           id: sampleCustomer.creditCards[0].id,
@@ -74,7 +73,7 @@ export async function POST(request: Request) {
       
       // Try a direct join to debug
       const customerWithCardsRaw = await db.$queryRaw`
-        SELECT c.id as customer_id, c."firstName", c."lastName", 
+        SELECT c.id as customer_id, c."fullName", 
                cc.id as card_id, cc."cardNumber", cc."cardholderName"
         FROM "Customer" c
         JOIN "CreditCard" cc ON c.id = cc."customerId"

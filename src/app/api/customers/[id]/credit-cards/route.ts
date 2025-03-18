@@ -20,7 +20,6 @@ export async function GET(
     // First check if the customer exists
     const customer = await db.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, firstName: true, lastName: true }
     });
 
     if (!customer) {
@@ -51,7 +50,6 @@ export async function GET(
 
     return NextResponse.json({
       customerId,
-      customerName: `${customer.firstName} ${customer.lastName}`,
       creditCards: sanitizedCards
     });
   } catch (error) {

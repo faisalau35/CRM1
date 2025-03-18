@@ -47,8 +47,7 @@ import {
 
 interface Customer {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   secondaryEmail?: string;
   phone: string;
@@ -221,8 +220,7 @@ export default function CustomersPage() {
   const filteredCustomers = customers.filter(customer => {
     const searchTerm = searchQuery.toLowerCase();
     return (
-      (customer.firstName?.toLowerCase() || '').includes(searchTerm) ||
-      (customer.lastName?.toLowerCase() || '').includes(searchTerm) ||
+      (customer.fullName?.toLowerCase() || '').includes(searchTerm) ||
       (customer.email?.toLowerCase() || '').includes(searchTerm) ||
       (customer.phone?.toLowerCase() || '').includes(searchTerm) ||
       (customer.city?.toLowerCase() || '').includes(searchTerm) ||
@@ -370,8 +368,7 @@ export default function CustomersPage() {
         // Start with basic customer data
         const rowData = [
           customer.id,
-          customer.firstName || '',
-          customer.lastName || '',
+          customer.fullName || '',
           customer.email || '',
           customer.secondaryEmail || '',
           customer.phone || '',
@@ -525,8 +522,8 @@ export default function CustomersPage() {
         // Create a base object with all standard customer fields
         const customerData: Record<string, any> = {
           ID: customer.id,
-          'First Name': customer.firstName || '',
-          'Last Name': customer.lastName || '',
+          'First Name': customer.fullName || '',
+          'Last Name': customer.email || '',
           'Email': customer.email || '',
           'Secondary Email': customer.secondaryEmail || '',
           'Phone': customer.phone || '',
@@ -650,7 +647,7 @@ export default function CustomersPage() {
       // Check if credit cards are included
       const creditCardInfo = data.map((customer: Customer) => ({
         customerId: customer.id,
-        name: `${customer.firstName} ${customer.lastName}`,
+        name: `${customer.fullName}`,
         hasCards: customer.creditCards && customer.creditCards.length > 0,
         cardCount: customer.creditCards?.length || 0,
         cards: customer.creditCards || []
@@ -1186,17 +1183,17 @@ export default function CustomersPage() {
                       <Checkbox 
                         checked={selectedCustomers.includes(customer.id)}
                         onChange={() => toggleCustomerSelection(customer.id)}
-                        aria-label={`Select ${customer.firstName} ${customer.lastName}`}
+                        aria-label={`Select ${customer.fullName}`}
                       />
                     </Table.Td>
                     <Table.Td>
                       <Group gap="sm">
                         <Avatar color="blue" radius="xl" size="sm">
-                          {customer.firstName.charAt(0) + customer.lastName.charAt(0)}
+                          {customer.fullName.charAt(0)}
                         </Avatar>
                         <div>
                           <Text size="sm" fw={500} component={Link} href={`/dashboard/customers/${customer.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            {customer.firstName} {customer.lastName}
+                            {customer.fullName}
                           </Text>
                           <Text size="xs" c="dimmed">ID: {customer.id.substring(0, 8)}</Text>
                         </div>

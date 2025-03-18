@@ -15,8 +15,9 @@ import { LOCAL_BINS } from "@/lib/binDatabase";
 interface CreditCard {
   cardholderName: string;
   cardNumber: string;
-  expiryMonth: string;
-  expiryYear: string;
+  expiryDate: string; // Combined MM/YY format
+  expiryMonth: string; // Kept for compatibility
+  expiryYear: string; // Kept for compatibility
   cvv: string;
   bankName?: string;
   cardType?: string;
@@ -92,6 +93,7 @@ export default function NewCustomerPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([{
     cardholderName: "",
     cardNumber: "",
+    expiryDate: "",
     expiryMonth: "",
     expiryYear: "",
     cvv: "",
@@ -124,18 +126,29 @@ export default function NewCustomerPage() {
   };
 
   const addCreditCard = () => {
-    setCreditCards([...creditCards, {
-      cardholderName: "",
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvv: "",
-      bankName: undefined,
-      cardType: undefined,
-      scheme: undefined,
-      country: undefined,
-      isValid: undefined,
-    }]);
+    // Get cardholder name from the first card if available
+    const firstCardName = creditCards.length > 0 ? creditCards[0].cardholderName : "";
+    
+    // Directly create the new card array with the copied name
+    const newCards = [
+      ...creditCards,
+      {
+        cardholderName: firstCardName,
+        cardNumber: "",
+        expiryDate: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvv: "",
+        bankName: undefined,
+        cardType: undefined,
+        scheme: undefined,
+        country: undefined,
+        isValid: undefined,
+      }
+    ];
+    
+    // Update state with the new array
+    setCreditCards(newCards);
   };
 
   const removeCreditCard = (index: number) => {
@@ -202,6 +215,33 @@ export default function NewCustomerPage() {
           });
         }
       }
+    } else if (field === 'expiryDate') {
+      // Handle the combined MM/YY format
+      // Format input as user types, enforcing MM/YY pattern
+      let formattedValue = value.replace(/\D/g, '');
+      
+      // Limit to 4 digits
+      if (formattedValue.length > 4) {
+        formattedValue = formattedValue.slice(0, 4);
+      }
+      
+      // Format as MM/YY
+      if (formattedValue.length > 2) {
+        formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2)}`;
+      }
+      
+      // Extract month and year for compatibility
+      const parts = formattedValue.split('/');
+      const month = parts[0] || '';
+      const year = parts.length > 1 ? parts[1] : '';
+      
+      updatedCards[index] = { 
+        ...updatedCards[index], 
+        expiryDate: formattedValue,
+        expiryMonth: month,
+        expiryYear: year.length === 2 ? `20${year}` : year
+      };
+      setCreditCards(updatedCards);
     } else {
       // For other fields, just update the value
       updatedCards[index] = { 
@@ -293,8 +333,7 @@ export default function NewCustomerPage() {
       
       // Create a simple customer object without credit cards
       const customerData = {
-        firstName: formData.get("firstName"),
-        lastName: formData.get("lastName"),
+        fullName: formData.get("fullName"),
         email: formData.get("email"),
         secondaryEmail: formData.get("secondaryEmail"),
         phone: formData.get("phone"),
@@ -349,7 +388,7 @@ export default function NewCustomerPage() {
       localStorage.removeItem("creditCards");
       
       // Show enhanced success notification
-      toast.success(`Customer ${data.firstName} ${data.lastName} created successfully`, {
+      toast.success(`Customer ${data.fullName} created successfully`, {
         description: "You will be redirected to the customers list in a moment.",
         duration: 3000,
         position: "top-center",
@@ -397,25 +436,14 @@ export default function NewCustomerPage() {
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Personal Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  required
+                  disabled={isLoading}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -600,6 +628,15 @@ export default function NewCustomerPage() {
                           value={card.cardholderName}
                           onChange={(e) => updateCreditCard(index, "cardholderName", e.target.value)}
                           disabled={isLoading}
+                          placeholder={index > 0 && !card.cardholderName && creditCards[0]?.cardholderName 
+                            ? `Same as first card: ${creditCards[0].cardholderName}` 
+                            : ""}
+                          onFocus={(e) => {
+                            // Auto-fill with first card's name if this is not the first card and the field is empty
+                            if (index > 0 && !card.cardholderName && creditCards[0]?.cardholderName) {
+                              updateCreditCard(index, "cardholderName", creditCards[0].cardholderName);
+                            }
+                          }}
                         />
                       </div>
                       <div className="space-y-2">
@@ -688,26 +725,15 @@ export default function NewCustomerPage() {
                           </div>
                         )}
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Expiry Month</Label>
+                          <Label>Expiry Date (MM/YY)</Label>
                           <Input
-                            type="number"
-                            min="1"
-                            max="12"
-                            value={card.expiryMonth}
-                            onChange={(e) => updateCreditCard(index, "expiryMonth", e.target.value)}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Expiry Year</Label>
-                          <Input
-                            type="number"
-                            min={new Date().getFullYear()}
-                            max={new Date().getFullYear() + 20}
-                            value={card.expiryYear}
-                            onChange={(e) => updateCreditCard(index, "expiryYear", e.target.value)}
+                            type="text"
+                            placeholder="MM/YY"
+                            maxLength={5}
+                            value={card.expiryDate}
+                            onChange={(e) => updateCreditCard(index, "expiryDate", e.target.value)}
                             disabled={isLoading}
                           />
                         </div>

@@ -77,24 +77,25 @@ interface CreditCard {
 
 interface Customer {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   secondaryEmail?: string;
   phone: string;
   secondaryPhone?: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  ssn: string;
-  dateOfBirth: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  dateOfBirth?: string;
+  ssn?: string;
   driverLicense?: string;
   notes?: string;
   ipAddress?: string;
-  creditCards: CreditCard[];
+  status: 'IN_PROGRESS' | 'ENGAGED' | 'DEAD';
   createdAt: string;
   updatedAt: string;
+  userId: string;
+  creditCards: CreditCard[];
 }
 
 // Reusable component for text with copy button
@@ -619,10 +620,10 @@ export default function CustomerPage() {
               color="blue"
               src={null}
             >
-              {customer.firstName.charAt(0) + customer.lastName.charAt(0)}
+              {customer.fullName.charAt(0)}
             </Avatar>
             <div>
-              <Title order={3}>{customer.firstName} {customer.lastName}</Title>
+              <Title order={3}>{customer.fullName}</Title>
               <Group gap="xs">
                 <Badge color="blue" variant="light">Customer</Badge>
                 <Text size="sm" c="dimmed">ID: {customer.id}</Text>
@@ -680,8 +681,8 @@ export default function CustomerPage() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <CopyableText value={`${customer.firstName} ${customer.lastName}`}>
-                    <Text>{customer.firstName} {customer.lastName}</Text>
+                  <CopyableText value={customer.fullName}>
+                    <Text>{customer.fullName}</Text>
                   </CopyableText>
                 </Table.Td>
               </Table.Tr>
@@ -1123,7 +1124,7 @@ export default function CustomerPage() {
         centered
       >
         <Text size="sm" mb="lg">
-          Are you sure you want to delete <strong>{customer.firstName} {customer.lastName}</strong>? This action cannot be undone.
+          Are you sure you want to delete <strong>{customer.fullName}</strong>? This action cannot be undone.
         </Text>
         <Group justify="flex-end">
           <Button variant="default" onClick={() => setDeleteModalOpen(false)}>

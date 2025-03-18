@@ -40,8 +40,7 @@ export async function PATCH(
     const customerId = context.params.id;
     const json = await request.json();
     const { 
-      firstName, 
-      lastName, 
+      fullName,
       email, 
       secondaryEmail, 
       phone, 
@@ -74,30 +73,39 @@ export async function PATCH(
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
-    // Update the customer
-    const updatedCustomer = await db.customer.update({
-      where: {
-        id: customerId,
-      },
-      data: {
-        firstName,
-        lastName,
-        email: email || null,
-        secondaryEmail: secondaryEmail || null,
-        phone: phone || null,
-        secondaryPhone: secondaryPhone || null,
-        address: address || null,
-        city: city || null,
-        state: state || null,
-        zipCode: zipCode || null,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-        ssn: ssn || null,
-        driverLicense: driverLicense || null,
-        notes: notes || null,
-        ipAddress: ipAddress || null,
-        status: status || undefined,
-      },
-    });
+    // Update the customer with fullName instead of firstName and lastName
+    let updatedCustomer;
+    try {
+      updatedCustomer = await db.customer.update({
+        where: {
+          id: customerId,
+        },
+        data: {
+          fullName,
+          email: email || null,
+          secondaryEmail: secondaryEmail || null,
+          phone: phone || null,
+          secondaryPhone: secondaryPhone || null,
+          address: address || null,
+          city: city || null,
+          state: state || null,
+          zipCode: zipCode || null,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          ssn: ssn || null,
+          driverLicense: driverLicense || null,
+          notes: notes || null,
+          ipAddress: ipAddress || null,
+          status: status || undefined,
+        },
+      });
+      console.log("Customer updated successfully:", updatedCustomer.id);
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      return NextResponse.json(
+        { error: "Failed to update customer data" },
+        { status: 500 }
+      );
+    }
 
     // Handle credit cards
     if (creditCards && creditCards.length > 0) {

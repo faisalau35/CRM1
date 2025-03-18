@@ -21,6 +21,7 @@ interface CreditCard {
   id?: string;
   cardholderName: string;
   cardNumber: string;
+  expiryDate: string; // Combined MM/YY format
   expiryMonth: string;
   expiryYear: string;
   cvv: string;
@@ -107,75 +108,73 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
   const [secondaryEmail, setSecondaryEmail] = useState<string>("");
   const [secondaryPhone, setSecondaryPhone] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [status, setStatus] = useState<CustomerStatus>(CustomerStatus.IN_PROGRESS);
+  const [fullName, setFullName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [city, setCity] = useState<string>("");
+  const [state, setState] = useState<string>("");
+  const [zipCode, setZipCode] = useState<string>("");
+  const [dateOfBirth, setDateOfBirth] = useState<string>("");
+  const [driverLicense, setDriverLicense] = useState<string>("");
+  const [ipAddress, setIpAddress] = useState<string>("");
 
   // Fetch customer data
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
+        setIsLoading(true);
+        
         const response = await fetch(`/api/customers/${customerId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch customer");
         }
-        const data = await response.json();
-        setCustomer(data);
-        setSsn(data.ssn || "");
         
-        // Initialize credit cards from customer data
-        if (data.creditCards && data.creditCards.length > 0) {
-          const formattedCards = await Promise.all(data.creditCards.map(async (card: any) => {
-            // Format card number with spaces
-            const formattedCardNumber = formatCreditCardNumber(card.cardNumber);
-            
-            // Initialize with empty card details
-            let cardDetails: CardDetails = {};
-            
-            try {
-              cardDetails = await lookupCardDetails(card.cardNumber);
-            } catch (error) {
-              console.error("Error looking up card details:", error);
-            }
+        const data = await response.json();
+        
+        // Format credit card data
+        if (data.creditCards) {
+          data.creditCards = data.creditCards.map((card: any) => {
+            const month = card.expiryMonth.toString();
+            const year = card.expiryYear.toString();
+            const shortYear = year.length === 4 ? year.slice(2) : year;
             
             return {
-              id: card.id,
-              cardholderName: card.cardholderName,
-              cardNumber: formattedCardNumber,
-              expiryMonth: card.expiryMonth.toString(),
-              expiryYear: card.expiryYear.toString(),
-              cvv: card.cvv, // Use actual CVV value
-              isDefault: card.isDefault,
-              bankName: cardDetails.bankName,
-              cardType: cardDetails.cardType,
-              scheme: cardDetails.scheme,
-              country: cardDetails.country,
-              isValid: cardDetails.isValid
+              ...card,
+              expiryMonth: month,
+              expiryYear: year,
+              expiryDate: `${month}/${shortYear}`,
+              cardNumber: card.cardNumber || "",
+              cardholderName: card.cardholderName || "",
             };
-          }));
-          
-          setCreditCards(formattedCards);
-        } else {
-          setCreditCards([{
-            cardholderName: "",
-            cardNumber: "",
-            expiryMonth: "",
-            expiryYear: "",
-            cvv: "",
-            isDefault: true,
-            bankName: undefined,
-            cardType: undefined,
-            scheme: undefined,
-            country: undefined,
-            isValid: undefined
-          }]);
+          });
         }
         
-        if (data.secondaryEmail) setSecondaryEmail(data.secondaryEmail);
-        if (data.secondaryPhone) setSecondaryPhone(data.secondaryPhone);
-        if (data.notes) setNotes(data.notes);
+        setCustomer(data);
+        setCreditCards(data.creditCards || []);
+        setSsn(data.ssn || "");
+        setStatus(data.status);
         
-        setIsLoading(false);
+        // Set the form data
+        setFullName(data.fullName || "");
+        setEmail(data.email || "");
+        setSecondaryEmail(data.secondaryEmail || "");
+        setPhone(data.phone || "");
+        setSecondaryPhone(data.secondaryPhone || "");
+        setAddress(data.address || "");
+        setCity(data.city || "");
+        setState(data.state || "");
+        setZipCode(data.zipCode || "");
+        setDateOfBirth(data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : "");
+        setDriverLicense(data.driverLicense || "");
+        setNotes(data.notes || "");
+        setIpAddress(data.ipAddress || "");
       } catch (error) {
-        toast.error("Failed to fetch customer data");
-        router.push("/dashboard/customers");
+        console.error("Error fetching customer:", error);
+        toast.error("Failed to load customer data");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -188,30 +187,22 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
   };
 
   const addCreditCard = () => {
-    // Make sure we have at least one card and check its cardholder name
-    const firstCard = creditCards[0];
-    const cardholderName = firstCard && firstCard.cardholderName ? firstCard.cardholderName.trim() : "";
+    // Get cardholder name from the first card if available
+    const firstCardName = creditCards.length > 0 ? creditCards[0].cardholderName : "";
     
-    console.log("Adding a new card with cardholder name:", cardholderName);
-    console.log("First card data:", firstCard);
-    
-    // Create a new card with the first card's cardholder name
-    const newCard = {
-      cardholderName,
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvv: "",
-      isDefault: false,
-      bankName: undefined,
-      cardType: undefined,
-      scheme: undefined,
-      country: undefined,
-      isValid: undefined
-    };
-    
-    // Add the new card to the state
-    setCreditCards([...creditCards, newCard]);
+    setCreditCards([
+      ...creditCards,
+      {
+        cardholderName: firstCardName,
+        cardNumber: "",
+        expiryDate: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvv: "",
+        isDefault: false,
+        isValid: undefined,
+      },
+    ]);
   };
 
   const removeCreditCard = (index: number) => {
@@ -221,7 +212,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
   const updateCreditCard = async (index: number, field: keyof CreditCard, value: string) => {
     const updatedCards = [...creditCards];
     
-    if (field === 'cardNumber') {
+    if (field === "cardNumber") {
       // Format the card number
       const formattedValue = formatCreditCardNumber(value);
       updatedCards[index] = { 
@@ -240,7 +231,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
           // Extract BIN (first 6 digits)
           const bin = cleanNumber.slice(0, 6);
           
-          // Use the API route directly for consistency with other pages
+          // Use the API route
           const response = await fetch(`/api/bin-lookup?bin=${bin}`);
           
           if (!response.ok) {
@@ -249,7 +240,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
           
           const data = await response.json();
           
-          // Update with the card details using functional state update
+          // Update with the card details
           setCreditCards(prevCards => {
             const newCards = [...prevCards];
             newCards[index] = {
@@ -259,7 +250,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
               cardType: data.type?.toLowerCase(),
               scheme: data.scheme?.toLowerCase(),
               country: data.country,
-              isValid: true,
+              isValid: true, // API doesn't return this, assume valid
               bin: bin, // Store the BIN for future reference
             };
             return newCards;
@@ -277,20 +268,34 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
             return errorCards;
           });
         }
-      } else {
-        // Clear details if not enough digits
-        updatedCards[index] = {
-          ...updatedCards[index],
-          cardNumber: formattedValue,
-          bankName: undefined,
-          cardType: undefined,
-          scheme: undefined,
-          country: undefined,
-          isValid: undefined,
-          bin: undefined,
-        };
-        setCreditCards(updatedCards);
       }
+    } else if (field === 'expiryDate') {
+      // Handle the combined MM/YY format
+      // Format input as user types, enforcing MM/YY pattern
+      let formattedValue = value.replace(/\D/g, '');
+      
+      // Limit to 4 digits
+      if (formattedValue.length > 4) {
+        formattedValue = formattedValue.slice(0, 4);
+      }
+      
+      // Format as MM/YY
+      if (formattedValue.length > 2) {
+        formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2)}`;
+      }
+      
+      // Extract month and year for compatibility
+      const parts = formattedValue.split('/');
+      const month = parts[0] || '';
+      const year = parts.length > 1 ? parts[1] : '';
+      
+      updatedCards[index] = { 
+        ...updatedCards[index], 
+        expiryDate: formattedValue,
+        expiryMonth: month,
+        expiryYear: year.length === 2 ? `20${year}` : year
+      };
+      setCreditCards(updatedCards);
     } else {
       // For other fields, just update the value
       updatedCards[index] = { 
@@ -298,11 +303,6 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         [field]: value 
       };
       setCreditCards(updatedCards);
-      
-      // If we're updating the cardholder name of the first card, log it for debugging
-      if (field === 'cardholderName' && index === 0) {
-        console.log("Updated first card's cardholder name to:", value);
-      }
     }
   };
 
@@ -311,37 +311,27 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
     setIsLoading(true);
 
     try {
-      const formData = new FormData(event.currentTarget);
-      const data = {
-        fullName: formData.get("fullName"),
-        email: formData.get("email"),
-        secondaryEmail: formData.get("secondaryEmail") || null,
-        phone: formData.get("phone"),
-        secondaryPhone: formData.get("secondaryPhone") || null,
-        address: formData.get("address"),
-        city: formData.get("city"),
-        state: formData.get("state"),
-        zipCode: formData.get("zipCode"),
-        dateOfBirth: formData.get("dateOfBirth"),
-        ssn: formData.get("ssn"),
-        driverLicense: formData.get("driverLicense"),
-        notes: formData.get("notes") || null,
-        ipAddress: formData.get("ipAddress") || null,
-        status: formData.get("status") as CustomerStatus,
-        creditCards: creditCards.map((card, index) => ({
+      const updatedCustomer = {
+        fullName,
+        email,
+        secondaryEmail,
+        phone,
+        secondaryPhone,
+        address,
+        city,
+        state,
+        zipCode,
+        dateOfBirth: dateOfBirth || null,
+        ssn,
+        driverLicense,
+        notes,
+        ipAddress,
+        status,
+        creditCards: creditCards.map(card => ({
           ...card,
-          isDefault: index === 0,
+          // Convert expiry values to integers for API
           expiryMonth: parseInt(card.expiryMonth) || 0,
-          expiryYear: parseInt(card.expiryYear) || 0,
-          // Remove spaces from card number before sending to API
-          cardNumber: card.cardNumber.replace(/\s/g, ''),
-          cvv: card.cvv,
-          // Include BIN data for storage
-          bin: card.bin,
-          bankName: card.bankName,
-          cardType: card.cardType,
-          scheme: card.scheme,
-          country: card.country,
+          expiryYear: card.expiryYear.length === 2 ? parseInt(`20${card.expiryYear}`) : parseInt(card.expiryYear) || 0
         })),
       };
 
@@ -350,7 +340,7 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(updatedCustomer),
       });
 
       if (!response.ok) {
@@ -654,26 +644,15 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                           </div>
                         )}
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Expiry Month</Label>
+                          <Label>Expiry Date (MM/YY)</Label>
                           <Input
-                            type="number"
-                            min="1"
-                            max="12"
-                            value={card.expiryMonth}
-                            onChange={(e) => updateCreditCard(index, "expiryMonth", e.target.value)}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Expiry Year</Label>
-                          <Input
-                            type="number"
-                            min={new Date().getFullYear()}
-                            max={new Date().getFullYear() + 20}
-                            value={card.expiryYear}
-                            onChange={(e) => updateCreditCard(index, "expiryYear", e.target.value)}
+                            type="text"
+                            placeholder="MM/YY"
+                            maxLength={5}
+                            value={card.expiryDate}
+                            onChange={(e) => updateCreditCard(index, "expiryDate", e.target.value)}
                             disabled={isLoading}
                           />
                         </div>
