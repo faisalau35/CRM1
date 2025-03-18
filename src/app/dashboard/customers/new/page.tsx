@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Icons } from "@/components/icons";
 import { lookupCardDetails, validateCardNumber } from "@/lib/binLookup";
 import { LOCAL_BINS } from "@/lib/binDatabase";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 interface CreditCard {
   cardholderName: string;
@@ -107,6 +108,10 @@ export default function NewCustomerPage() {
   const [secondaryEmail, setSecondaryEmail] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -317,6 +322,18 @@ export default function NewCustomerPage() {
     }
   };
 
+  const handleAddressSelect = (addressData: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  }) => {
+    setAddress(addressData.address);
+    setCity(addressData.city);
+    setState(addressData.state);
+    setZipCode(addressData.zipCode);
+  };
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
@@ -338,10 +355,10 @@ export default function NewCustomerPage() {
         secondaryEmail: formData.get("secondaryEmail"),
         phone: formData.get("phone"),
         secondaryPhone: formData.get("secondaryPhone"),
-        address: formData.get("address"),
-        city: formData.get("city"),
-        state: formData.get("state"),
-        zipCode: formData.get("zipCode"),
+        address: address,
+        city: city,
+        state: state,
+        zipCode: zipCode,
         ssn: formData.get("ssn"),
         dateOfBirth: formData.get("dateOfBirth"),
         driverLicense: formData.get("driverLicense"),
@@ -531,20 +548,27 @@ export default function NewCustomerPage() {
 
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Address Information</h3>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  disabled={isLoading}
-                />
-              </div>
+              <AddressAutocomplete
+                apiKey="666836e85a2b4768a57712ecac6b35cf"
+                onAddressSelect={handleAddressSelect}
+                disabled={isLoading}
+                initialValue={address}
+                name="address"
+                useGeolocation={true}
+                placeholder="Type your street address to auto-complete all fields"
+                key="address-autocomplete-component"
+              />
+              {/* Hidden input to ensure address is submitted with the form */}
+              <input type="hidden" name="address" value={address} />
+              
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
                     name="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
                     disabled={isLoading}
                   />
                 </div>
@@ -553,6 +577,8 @@ export default function NewCustomerPage() {
                   <Input
                     id="state"
                     name="state"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
                     disabled={isLoading}
                   />
                 </div>
@@ -561,6 +587,8 @@ export default function NewCustomerPage() {
                   <Input
                     id="zipCode"
                     name="zipCode"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
                     disabled={isLoading}
                   />
                 </div>

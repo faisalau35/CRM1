@@ -50,15 +50,22 @@ const theme = createTheme({
 
 export function MantineProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [forcedColorScheme, setForcedColorScheme] = useState<'light' | 'dark' | undefined>(undefined);
   
+  // Only update color scheme after component mounts to avoid hydration mismatch
   useEffect(() => {
+    setMounted(true);
     setForcedColorScheme(resolvedTheme === 'dark' ? 'dark' : 'light');
   }, [resolvedTheme]);
 
+  // During SSR and first render, don't apply a specific color scheme
+  // This avoids hydration mismatches with the server
+  const effectiveColorScheme = mounted ? forcedColorScheme : undefined;
+
   return (
     <SessionProvider>
-      <BaseMantineProvider theme={theme} forceColorScheme={forcedColorScheme}>
+      <BaseMantineProvider theme={theme} forceColorScheme={effectiveColorScheme}>
         <Notifications position="top-right" />
         {children}
       </BaseMantineProvider>
