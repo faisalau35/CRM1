@@ -4,11 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = context.params.id;
+    const id = params.id;
     
     if (!id) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
