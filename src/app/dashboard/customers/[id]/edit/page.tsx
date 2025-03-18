@@ -11,6 +11,12 @@ import { Icons } from "@/components/icons";
 import { lookupCardDetails, CardDetails } from "@/lib/binLookup";
 import { use } from "react";
 
+enum CustomerStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  ENGAGED = 'ENGAGED',
+  DEAD = 'DEAD'
+}
+
 interface CreditCard {
   id?: string;
   cardholderName: string;
@@ -29,21 +35,23 @@ interface CreditCard {
 
 interface Customer {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  secondaryEmail?: string | null;
-  phone: string | null;
-  secondaryPhone?: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  zipCode: string | null;
-  dateOfBirth: string | null;
-  ssn: string | null;
-  driverLicense: string | null;
-  notes?: string | null;
-  ipAddress?: string | null;
+  fullName: string;
+  email: string;
+  secondaryEmail?: string;
+  phone: string;
+  secondaryPhone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  dateOfBirth?: string;
+  ssn?: string;
+  driverLicense?: string;
+  notes?: string;
+  ipAddress?: string;
+  status: CustomerStatus;
+  createdAt: string;
+  updatedAt: string;
   creditCards: CreditCard[];
 }
 
@@ -180,8 +188,16 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
   };
 
   const addCreditCard = () => {
-    setCreditCards([...creditCards, {
-      cardholderName: "",
+    // Make sure we have at least one card and check its cardholder name
+    const firstCard = creditCards[0];
+    const cardholderName = firstCard && firstCard.cardholderName ? firstCard.cardholderName.trim() : "";
+    
+    console.log("Adding a new card with cardholder name:", cardholderName);
+    console.log("First card data:", firstCard);
+    
+    // Create a new card with the first card's cardholder name
+    const newCard = {
+      cardholderName,
       cardNumber: "",
       expiryMonth: "",
       expiryYear: "",
@@ -192,7 +208,10 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
       scheme: undefined,
       country: undefined,
       isValid: undefined
-    }]);
+    };
+    
+    // Add the new card to the state
+    setCreditCards([...creditCards, newCard]);
   };
 
   const removeCreditCard = (index: number) => {
@@ -279,6 +298,11 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
         [field]: value 
       };
       setCreditCards(updatedCards);
+      
+      // If we're updating the cardholder name of the first card, log it for debugging
+      if (field === 'cardholderName' && index === 0) {
+        console.log("Updated first card's cardholder name to:", value);
+      }
     }
   };
 
@@ -289,21 +313,21 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
     try {
       const formData = new FormData(event.currentTarget);
       const data = {
-        firstName: formData.get("firstName"),
-        lastName: formData.get("lastName"),
+        fullName: formData.get("fullName"),
         email: formData.get("email"),
-        secondaryEmail: formData.get("secondaryEmail"),
+        secondaryEmail: formData.get("secondaryEmail") || null,
         phone: formData.get("phone"),
-        secondaryPhone: formData.get("secondaryPhone"),
+        secondaryPhone: formData.get("secondaryPhone") || null,
         address: formData.get("address"),
         city: formData.get("city"),
         state: formData.get("state"),
         zipCode: formData.get("zipCode"),
         dateOfBirth: formData.get("dateOfBirth"),
-        ssn: ssn,
+        ssn: formData.get("ssn"),
         driverLicense: formData.get("driverLicense"),
-        notes: formData.get("notes"),
-        ipAddress: formData.get("ipAddress"),
+        notes: formData.get("notes") || null,
+        ipAddress: formData.get("ipAddress") || null,
+        status: formData.get("status") as CustomerStatus,
         creditCards: creditCards.map((card, index) => ({
           ...card,
           isDefault: index === 0,
@@ -366,35 +390,25 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
               <h3 className="text-lg font-medium">Personal Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="fullName">Full Name</Label>
                   <Input
-                    id="firstName"
-                    name="firstName"
-                    defaultValue={customer.firstName}
+                    id="fullName"
+                    name="fullName"
+                    defaultValue={customer.fullName}
                     required
                     disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="lastName"
-                    name="lastName"
-                    defaultValue={customer.lastName}
-                    required
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={customer.email || ""}
                     disabled={isLoading}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  defaultValue={customer.email || ""}
-                  disabled={isLoading}
-                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="secondaryEmail">Secondary Email</Label>
@@ -524,14 +538,24 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Credit Card Information</h3>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   onClick={addCreditCard}
                   disabled={isLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm"
                 >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-5 w-5 mr-2" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
                   Add Another Card
                 </Button>
               </div>
@@ -558,6 +582,15 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                           value={card.cardholderName}
                           onChange={(e) => updateCreditCard(index, "cardholderName", e.target.value)}
                           disabled={isLoading}
+                          placeholder={index > 0 && !card.cardholderName && creditCards[0]?.cardholderName 
+                            ? `Same as first card: ${creditCards[0].cardholderName}` 
+                            : ""}
+                          onFocus={(e) => {
+                            // Auto-fill with first card's name if this is not the first card and the field is empty
+                            if (index > 0 && !card.cardholderName && creditCards[0]?.cardholderName) {
+                              updateCreditCard(index, "cardholderName", creditCards[0].cardholderName);
+                            }
+                          }}
                         />
                       </div>
                       <div className="space-y-2">
@@ -659,6 +692,30 @@ function EditCustomerPageContent({ customerId }: { customerId: string }) {
                   </CardContent>
                 </Card>
               ))}
+              
+              {/* Add a prominent button at the bottom if there are already cards */}
+              {creditCards.length > 0 && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={addCreditCard}
+                    disabled={isLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm"
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-5 w-5 mr-2" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Another Card
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-4">
